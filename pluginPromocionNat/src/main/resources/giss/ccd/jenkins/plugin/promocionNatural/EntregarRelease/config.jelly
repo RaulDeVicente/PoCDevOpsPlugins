@@ -1,0 +1,27 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <div align="left">
+    <f:entry title="${%Aplicacion}" field="aplicacion">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Version}" field="version">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Proceso}" field="proceso">
+        <select name="proceso">
+            <f:option value="IC" selected="${instance.proceso == 'IC'}">${%ProcesoIntCont}</f:option>
+            <f:option value="CE" selected="${instance.proceso == 'CE'}">${%ProcesoCert}</f:option>
+        </select>
+    </f:entry>
+    <f:entry title="${%RutaFichero}" field="rutaFichero">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%EstadoRetorno}" field="estadoRetorno">
+        <select name="estadoRetorno">
+            <f:option value="${%Success}" selected="${instance.estadoRetorno == 'Success'}">${%Success}</f:option>
+            <f:option value="${%Unstable}" selected="${instance.estadoRetorno == 'Unstable'}">${%Unstable}</f:option>
+            <f:option value="${%Failure}" selected="${instance.estadoRetorno == 'Failure'}">${%Failure}</f:option>
+        </select>
+    </f:entry>
+    </div>
+</j:jelly>

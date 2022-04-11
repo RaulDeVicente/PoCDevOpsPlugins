@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="monAdabasService" targetNamespace="http://seg-social.es/ccd/monAdabas/service" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soapjms="http://www.w3.org/2010/soapjms/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://seg-social.es/ccd/monAdabas/service" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://seg-social.es/ccd/monAdabas/service" xmlns:tns="http://seg-social.es/ccd/monAdabas/service" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:element name="finalizarPrueba" type="tns:finalizarPrueba"/>
+          <xsd:element name="finalizarPruebaResponse" type="tns:finalizarPruebaResponse"/>
+          <xsd:element name="iniciarPrueba" type="tns:iniciarPrueba"/>
+          <xsd:element name="iniciarPruebaResponse" type="tns:iniciarPruebaResponse"/>
+          <xsd:element name="pruebaFinalizada" type="tns:pruebaFinalizada"/>
+          <xsd:element name="pruebaFinalizadaResponse" type="tns:pruebaFinalizadaResponse"/>
+          <xsd:complexType name="finalizarPrueba">
+            <xsd:sequence>
+              <xsd:element name="ticketPrueba" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="finalizarPruebaResponse">
+            <xsd:sequence>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetornoLargo" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="iniciarPrueba">
+            <xsd:sequence>
+              <xsd:element name="aplicacion" type="xsd:string"/>
+              <xsd:element name="version" type="xsd:string"/>
+              <xsd:element name="pruebas" nillable="true" type="tns:pruebas"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="pruebas">
+            <xsd:sequence>
+              <xsd:element maxOccurs="unbounded" name="prueba" nillable="true" type="tns:prueba"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="prueba">
+            <xsd:sequence>
+              <xsd:element name="tipoPrueba" type="xsd:string"/>
+              <xsd:element name="alcance" type="xsd:string"/>
+              <xsd:element name="elemento" type="xsd:string"/>
+              <xsd:element name="usuario" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="iniciarPruebaResponse">
+            <xsd:sequence>
+              <xsd:element name="ticketPrueba" nillable="true" type="xsd:string"/>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetornoLargo" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="pruebaFinalizada">
+            <xsd:sequence>
+              <xsd:element name="ticketPrueba" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="pruebaFinalizadaResponse">
+            <xsd:sequence>
+              <xsd:element name="pendienteFinalizar" nillable="true" type="xsd:string"/>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetornoLargo" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        	</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="monAdabasService_PortType_finalizarPruebaResponse">
+    <wsdl:part name="parameters" element="tns:finalizarPruebaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="monAdabasService_PortType_iniciarPruebaResponse">
+    <wsdl:part name="parameters" element="tns:iniciarPruebaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="monAdabasService_PortType_finalizarPrueba">
+    <wsdl:part name="parameters" element="tns:finalizarPrueba">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="monAdabasService_PortType_iniciarPrueba">
+    <wsdl:part name="parameters" element="tns:iniciarPrueba">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="monAdabasService_PortType_pruebaFinalizada">
+    <wsdl:part name="parameters" element="tns:pruebaFinalizada">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="monAdabasService_PortType_pruebaFinalizadaResponse">
+    <wsdl:part name="parameters" element="tns:pruebaFinalizadaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="monAdabasService_PortType">
+    <wsdl:operation name="finalizarPrueba">
+      <wsdl:input message="tns:monAdabasService_PortType_finalizarPrueba">
+    </wsdl:input>
+      <wsdl:output message="tns:monAdabasService_PortType_finalizarPruebaResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="pruebaFinalizada">
+      <wsdl:input message="tns:monAdabasService_PortType_pruebaFinalizada">
+    </wsdl:input>
+      <wsdl:output message="tns:monAdabasService_PortType_pruebaFinalizadaResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="iniciarPrueba">
+      <wsdl:input message="tns:monAdabasService_PortType_iniciarPrueba">
+    </wsdl:input>
+      <wsdl:output message="tns:monAdabasService_PortType_iniciarPruebaResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Binder" type="tns:monAdabasService_PortType">
+    <soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="finalizarPrueba">
+      <soap12:operation soapAction="giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Binder_finalizarPrueba" style="document"/>
+      <wsdl:input>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="pruebaFinalizada">
+      <soap12:operation soapAction="giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Binder_pruebaFinalizada" style="document"/>
+      <wsdl:input>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="iniciarPrueba">
+      <soap12:operation soapAction="giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Binder_iniciarPrueba" style="document"/>
+      <wsdl:input>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="giss.ccd.natDevOps.ntdo.monAdabas.ws.monAdabasService">
+    <wsdl:port name="giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Port" binding="tns:giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Binder">
+      <soap12:address location="http://g99dnsa824-ld.portal.ss:15555/ws/giss.ccd.natDevOps.ntdo.monAdabas.ws:monAdabasService/giss_ccd_natDevOps_ntdo_monAdabas_ws_monAdabasService_Port"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

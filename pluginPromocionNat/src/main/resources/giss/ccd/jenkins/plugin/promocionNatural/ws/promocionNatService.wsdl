@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="promocionNatService" targetNamespace="http://seg-social.es/ccd/promocionNatService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soapjms="http://www.w3.org/2010/soapjms/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://seg-social.es/ccd/promocionNatService" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://seg-social.es/ccd/promocionNatService" xmlns:tns="http://seg-social.es/ccd/promocionNatService" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <xsd:element name="desplegarRelease" type="tns:desplegarRelease"/>
+          <xsd:element name="desplegarReleaseResponse" type="tns:desplegarReleaseResponse"/>
+          <xsd:element name="entregarRelease" type="tns:entregarRelease"/>
+          <xsd:element name="entregarReleaseResponse" type="tns:entregarReleaseResponse"/>
+          <xsd:element name="releaseDesplegada" type="tns:releaseDesplegada"/>
+          <xsd:element name="releaseDesplegadaResponse" type="tns:releaseDesplegadaResponse"/>
+          <xsd:complexType name="desplegarRelease">
+            <xsd:sequence>
+              <xsd:element name="aplicacion" type="xsd:string"/>
+              <xsd:element name="version" type="xsd:string"/>
+              <xsd:element name="entornoDestino" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="desplegarReleaseResponse">
+            <xsd:sequence>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="entregarRelease">
+            <xsd:sequence>
+              <xsd:element name="aplicacion" type="xsd:string"/>
+              <xsd:element name="version" type="xsd:string"/>
+              <xsd:element name="entorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="elementos" nillable="true" type="tns:elementos"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="elementos">
+            <xsd:sequence>
+              <xsd:element maxOccurs="unbounded" name="libreria" nillable="true" type="tns:libreria"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="libreria">
+            <xsd:sequence>
+              <xsd:element name="nombre" nillable="true" type="xsd:string"/>
+              <xsd:element name="modulos" nillable="true" type="tns:modulos"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="modulos">
+            <xsd:sequence>
+              <xsd:element maxOccurs="unbounded" name="modulo" nillable="true" type="tns:modulo"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="modulo">
+            <xsd:sequence>
+              <xsd:element name="nombre" nillable="true" type="xsd:string"/>
+              <xsd:element name="modo" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="entregarReleaseResponse">
+            <xsd:sequence>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="releaseDesplegada">
+            <xsd:sequence>
+              <xsd:element name="aplicacion" type="xsd:string"/>
+              <xsd:element name="version" type="xsd:string"/>
+              <xsd:element name="entornoDestino" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+          <xsd:complexType name="releaseDesplegadaResponse">
+            <xsd:sequence>
+              <xsd:element name="pendienteDesplegar" nillable="true" type="xsd:string"/>
+              <xsd:element name="codRetorno" nillable="true" type="xsd:string"/>
+              <xsd:element name="descRetorno" nillable="true" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        	</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="promocionNatService_PortType_releaseDesplegadaResponse">
+    <wsdl:part name="parameters" element="tns:releaseDesplegadaResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="promocionNatService_PortType_entregarReleaseResponse">
+    <wsdl:part name="parameters" element="tns:entregarReleaseResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="promocionNatService_PortType_desplegarRelease">
+    <wsdl:part name="parameters" element="tns:desplegarRelease">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="promocionNatService_PortType_desplegarReleaseResponse">
+    <wsdl:part name="parameters" element="tns:desplegarReleaseResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="promocionNatService_PortType_releaseDesplegada">
+    <wsdl:part name="parameters" element="tns:releaseDesplegada">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="promocionNatService_PortType_entregarRelease">
+    <wsdl:part name="parameters" element="tns:entregarRelease">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="promocionNatService_PortType">
+    <wsdl:operation name="desplegarRelease">
+      <wsdl:input message="tns:promocionNatService_PortType_desplegarRelease">
+    </wsdl:input>
+      <wsdl:output message="tns:promocionNatService_PortType_desplegarReleaseResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="releaseDesplegada">
+      <wsdl:input message="tns:promocionNatService_PortType_releaseDesplegada">
+    </wsdl:input>
+      <wsdl:output message="tns:promocionNatService_PortType_releaseDesplegadaResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="entregarRelease">
+      <wsdl:input message="tns:promocionNatService_PortType_entregarRelease">
+    </wsdl:input>
+      <wsdl:output message="tns:promocionNatService_PortType_entregarReleaseResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder" type="tns:promocionNatService_PortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="desplegarRelease">
+      <soap:operation soapAction="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder_desplegarRelease" style="document"/>
+      <wsdl:input>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="releaseDesplegada">
+      <soap:operation soapAction="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder_releaseDesplegada" style="document"/>
+      <wsdl:input>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="entregarRelease">
+      <soap:operation soapAction="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder_entregarRelease" style="document"/>
+      <wsdl:input>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body parts="parameters" use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="giss.ccd.natDevOps.ntdo.promocion.ws.promocionNatService">
+    <wsdl:port name="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Port" binding="tns:giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder">
+      <soap:address location="http://g99dnsa824-ld.portal.ss:15555/ws/giss.ccd.natDevOps.ntdo.promocion.ws:promocionNatService/giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Port"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

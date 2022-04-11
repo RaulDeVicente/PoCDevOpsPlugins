@@ -1,0 +1,36 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%TipoPrueba}" field="tipoPrueba">
+        <select name="tipoPrueba">
+            <f:option value="O" selected="${instance.tipoPrueba == 'O'}">${%TipoPrueba_O}</f:option>
+            <!--<f:option value="B" selected="${instance.tipoPrueba == 'B'}">${%TipoPrueba_B}</f:option>-->
+            <f:option value="P" selected="${instance.tipoPrueba == 'P'}">${%TipoPrueba_P}</f:option>
+        </select>
+    </f:entry>
+
+    <f:entry title="${%Alcance}" field="alcance">
+        <select name="alcance">
+            <f:option value="0" selected="${instance.alcance == '0'}">${%Alcance_0}</f:option>
+            <j:choose>
+                <j:when test="${instance.alcance}">
+                    <f:option value="1" selected="${instance.alcance == '1'}">${%Alcance_1}</f:option>
+                </j:when>
+                <j:otherwise>
+                    <f:option value="1" selected="true">${%Alcance_1}</f:option>
+                </j:otherwise>
+            </j:choose>
+            <f:option value="2" selected="${instance.alcance == '2'}">${%Alcance_2}</f:option>
+        </select>
+    </f:entry>
+    <f:entry title="${%Elemento}" field="elemento">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Usuario}" field="usuario">
+        <f:textbox />
+    </f:entry>
+    <f:entry>
+        <div align="right">
+            <f:repeatableDeleteButton />
+        </div>
+    </f:entry>
+</j:jelly>
