@@ -1,0 +1,33 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%Aplicacion}" field="aplicacion">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Version}" field="version">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%EntornoDestino}" field="entornoDestino">
+        <select name="entornoDestino">
+            <f:option value="IC" selected="${instance.entornoDestino == 'IC'}">${%EntDesIntCont}</f:option>
+            <f:option value="CE" selected="${instance.entornoDestino == 'CE'}">${%EntDesCert}</f:option>
+            <f:option value="PE" selected="${instance.entornoDestino == 'PE'}">${%EntDesPre}</f:option>
+            <f:option value="FO" selected="${instance.entornoDestino == 'FO'}">${%EntDesFor}</f:option>
+            <f:option value="PR" selected="${instance.entornoDestino == 'PR'}">${%EntDesPro}</f:option>
+        </select>
+    </f:entry>
+    <f:entry title="${%EstadoRetorno}" field="estadoRetorno">
+        <select name="estadoRetorno">
+            <f:option value="${%Success}" selected="${instance.estadoRetorno == 'Success'}">${%Success}</f:option>
+            <f:option value="${%Unstable}" selected="${instance.estadoRetorno == 'Unstable'}">${%Unstable}</f:option>
+            <f:option value="${%Failure}" selected="${instance.estadoRetorno == 'Failure'}">${%Failure}</f:option>
+        </select>
+    </f:entry>
+
+    <f:entry title="${%IntervaloPooling}" field="intervaloPooling">
+        <f:number default="60"/>
+    </f:entry>
+
+    <f:entry title="${%TimeoutPooling}" field="timeoutPooling">
+        <f:number default="600"/>
+    </f:entry>
+</j:jelly>

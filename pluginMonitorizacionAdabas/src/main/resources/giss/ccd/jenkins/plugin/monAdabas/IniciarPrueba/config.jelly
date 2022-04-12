@@ -1,0 +1,25 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <div align="left">
+    <f:entry title="${%Aplicacion}" field="aplicacion">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Version}" field="version">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%EstadoPruebas}" field="estadoPruebas">
+        <select name="estadoPruebas">
+            <f:option value="${%Success}" selected="${instance.estadoPruebas == 'Success'}">${%Success}</f:option>
+            <f:option value="${%Unstable}" selected="${instance.estadoPruebas == 'Unstable'}">${%Unstable}</f:option>
+            <f:option value="${%Failure}" selected="${instance.estadoPruebas == 'Failure'}">${%Failure}</f:option>
+        </select>
+    </f:entry>
+    <f:section title="${%Pruebas}">
+        <f:block>
+          <f:entry>
+              <f:repeatableProperty field="listaPruebas" minimum="1" />
+          </f:entry>
+    </f:block>
+    </f:section>
+    </div>
+</j:jelly>

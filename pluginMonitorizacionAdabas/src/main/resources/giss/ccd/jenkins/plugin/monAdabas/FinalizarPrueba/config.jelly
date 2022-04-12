@@ -1,0 +1,21 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%TicketPrueba}" field="ticketPrueba">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%EstadoRetorno}" field="estadoRetorno">
+        <select name="estadoRetorno">
+            <f:option value="${%Success}" selected="${instance.estadoRetorno == 'Success'}">${%Success}</f:option>
+            <f:option value="${%Unstable}" selected="${instance.estadoRetorno == 'Unstable'}">${%Unstable}</f:option>
+            <f:option value="${%Failure}" selected="${instance.estadoRetorno == 'Failure'}">${%Failure}</f:option>
+        </select>
+    </f:entry>
+
+    <f:entry title="${%IntervaloPooling}" field="intervaloPooling">
+        <f:number default="60"/>
+    </f:entry>
+
+    <f:entry title="${%TimeoutPooling}" field="timeoutPooling">
+        <f:number default="600"/>
+    </f:entry>
+</j:jelly>
