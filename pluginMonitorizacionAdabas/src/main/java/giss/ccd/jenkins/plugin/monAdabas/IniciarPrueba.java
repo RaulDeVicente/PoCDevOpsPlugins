@@ -126,8 +126,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                    case "UNSTABLE":
                        run.setResult(Result.UNSTABLE);
                        break;
-                   case "FAILURE":
-                       run.setResult(Result.FAILURE);
+                   default : run.setResult(Result.FAILURE);
                        break;
                }
            }
@@ -173,7 +172,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                 listener.getLogger().println("Descripción: " + Objects.toString(descRetorno.value,""));
                 listener.getLogger().println("Descripcion larga: " + Objects.toString(descRetornoLargo.value,""));
 
-                }catch (Exception e) {
+                }catch (RuntimeException e) {
                     listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                     listener.error(e.getMessage());
                     listener.getLogger().println(e.getCause());

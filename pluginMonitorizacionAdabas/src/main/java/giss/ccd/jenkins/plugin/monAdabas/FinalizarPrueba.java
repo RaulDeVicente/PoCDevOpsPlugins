@@ -51,10 +51,18 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                            String timeoutPooling) {
         this.ticketPrueba = ticketPrueba;
         this.estadoRetorno = estadoRetorno;
-        if(Util.tryParseNumber(intervaloPooling,-1).intValue()>0)
-            this.intervaloPooling=Integer.parseInt(intervaloPooling);
-        if(Util.tryParseNumber(intervaloPooling,-1).intValue()>0)
-            this.timeoutPooling=Integer.parseInt(timeoutPooling);
+        if(intervaloPooling!=null) {
+            int valorInt = Integer.parseInt(intervaloPooling);
+            if(valorInt>0) {
+                this.intervaloPooling = valorInt;
+            }
+        }
+        if(timeoutPooling!=null) {
+            int valorInt = Integer.parseInt(timeoutPooling);
+            if(valorInt>0) {
+                this.timeoutPooling = valorInt;
+            }
+        }
     }
 
     public String getTicketPrueba() {
@@ -212,11 +220,11 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                             break;
                         case "UNSTABLE": run.setResult(Result.UNSTABLE);
                             break;
-                        case "FAILURE": run.setResult(Result.FAILURE);
+                        default : run.setResult(Result.FAILURE);
                             break;
                     }
                 }
-            }catch (Exception e) {
+            }catch (RuntimeException e) {
                 listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
@@ -250,8 +258,11 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             if (Util.fixEmptyAndTrim(value)==null) {
                 return FormValidation.error(Messages.DescriptorImpl_errors_obligatorio());
             }
-            if (Util.tryParseNumber (value,0).intValue()==0) {
-                return FormValidation.error(Messages.DescriptorImpl_errors_numerico());
+            if (value!=null) {
+                int valorInt = Integer.parseInt(value);
+                if(valorInt==0) {
+                    return FormValidation.error(Messages.DescriptorImpl_errors_numerico());
+                }
             }
             return FormValidation.ok();
         }
@@ -260,8 +271,11 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             if (Util.fixEmptyAndTrim(value)==null) {
                 return FormValidation.error(Messages.DescriptorImpl_errors_obligatorio());
             }
-            if (Util.tryParseNumber (value,0).intValue()==0) {
-                return FormValidation.error(Messages.DescriptorImpl_errors_numerico());
+            if (value!=null) {
+                int valorInt = Integer.parseInt(value);
+                if(valorInt==0) {
+                    return FormValidation.error(Messages.DescriptorImpl_errors_numerico());
+                }
             }
             return FormValidation.ok();
         }

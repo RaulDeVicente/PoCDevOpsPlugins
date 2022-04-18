@@ -152,7 +152,7 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                                 break;
                             case "UNSTABLE": run.setResult(Result.UNSTABLE);
                                 break;
-                            case "FAILURE": run.setResult(Result.FAILURE);
+                            default : run.setResult(Result.FAILURE);
                                 break;
                         }
                     }
