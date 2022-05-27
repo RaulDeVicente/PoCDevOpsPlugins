@@ -7,6 +7,7 @@ import es.seg_social.ccd.promocionnatservice.Libreria;
 import es.seg_social.ccd.promocionnatservice.Modulo;
 import es.seg_social.ccd.promocionnatservice.Modulos;
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
+import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
 import giss.ccd.jenkins.plugin.util.RecursosFicheros;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
@@ -74,6 +75,8 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
     public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
+
+        run.setResult(Result.SUCCESS);
 
         listener.getLogger().println("Endpoint: " + endpoint);
         listener.getLogger().println("Aplicación: " + aplicacion);
@@ -181,36 +184,58 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
         }finally {
-            //Creacion de fichero JSON
+
+            Resultado resultado = new Resultado();
+            resultado.setCodigo(respuesta);
+            resultado.setEstadoFinal(run.getResult().toString());
+            resultado.setApp(aplicacion);
+            resultado.setVersion(version);
+            resultado.setER_codEntregarRelease(codRetorno.value);
+            resultado.setER_descEntregarRelease(descRetorno.value);
+            if(ultimoFicheroModificado == null){
+                resultado.setER_fichero(Messages.DescriptorImpl_excepciones_noExisteFichero());
+            }else{
+                resultado.setER_fichero(ultimoFicheroModificado.getName());
+            }
+            resultado.setER_proceso(proceso);
+            resultado.setER_modulosProcesados(contadorModulos);
+
             try {
+
+                //Creacion de fichero JSON
+
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objServicio = new JSONObject();
 
-                objServicio.put("codRetorno", codRetorno.value);
-                objServicio.put("descRetorno",descRetorno.value);
+                objServicio.put("codRetorno", Objects.toString(codRetorno.value,""));
+                objServicio.put("descRetorno", Objects.toString(descRetorno.value,""));
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("modulosProcesados", contadorModulos);
-                objPlugin.put("respuestaServicio",objServicio);
+                objPlugin.put("respuestaServicio", objServicio);
 
-                EnvVars envVars=run.getEnvironment(listener);
+                EnvVars envVars = run.getEnvironment(listener);
                 String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
                 String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
 
-                UtilJSON utilJSON= new UtilJSON();
+                UtilJSON utilJSON = new UtilJSON();
 
-                utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
-
+                utilJSON.guardarJSON(objPlugin, urlFichero, nombreFichero);
                 listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(urlFichero).toString());
+
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
                 listener.getLogger().println("Código de retorno: " + Objects.toString(codRetorno.value,""));
                 listener.getLogger().println("Descripción: " + Objects.toString(descRetorno.value,""));
+
+                run.addAction(new EntregarReleaseAction(resultado));
 
             }catch (Exception e) {
                 listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(run.getResult().toString());
+                run.addAction(new EntregarReleaseAction(resultado));
             }
         }
     }

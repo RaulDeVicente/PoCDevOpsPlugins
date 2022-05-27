@@ -1,0 +1,30 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson">
+    <link rel="stylesheet" type="text/css" href="${rootURL}/plugin/promocionNatural/css/global.css"/>
+    <t:summary icon="${it.icon}">
+            <p><b>Promoción Natural</b>: Entregar Release</p>
+         <p>
+             <div class="cuerpoA">
+                    <b>Aplicación</b>: ${it.resultado.app} <br/>
+                    <b>Release</b>: ${it.resultado.version} <br/>
+                    <b>Fichero procesado</b>: ${it.resultado.ER_fichero} <br/>
+                    <b>Proceso</b>: ${it.resultado.ER_proceso} <br/>
+                    <b>Módulos entregados</b>: ${it.resultado.ER_modulosProcesados} <br/>
+                    <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
+                    <b>Código final de ejecución</b>: ${it.resultado.codigo} <br/>
+             </div>
+             <div class="cuerpoB">
+                    <ul>
+                       <li>
+                           Ejecución de servicio <i>entregarRelease</i>:<br/>
+                           <div class="marg-i-10">
+                               Código de retorno &amp;rarr; ${it.resultado.ER_codEntregarRelease}<br/>
+                               Descripción final &amp;rarr; ${it.resultado.ER_descEntregarRelease}<br/>
+                           </div>
+
+                       </li>
+                    </ul>
+             </div>
+         </p>
+    </t:summary>
+</j:jelly>

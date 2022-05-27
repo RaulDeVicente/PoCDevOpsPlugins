@@ -2,10 +2,8 @@ package giss.ccd.jenkins.plugin.util;
 
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -35,11 +33,7 @@ public class RecursosFicheros {
     public File ultimoFicheroModificado(String directorio, String patron) {
         // Recuperamos los ficheros desde el directorio y patron indicados
         File f = new File(directorio);
-        File[] ficheros = f.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toUpperCase().contains(patron.toUpperCase());
-            }
-        });
+        File[] ficheros = f.listFiles((dir, name) -> name.toUpperCase().contains(patron.toUpperCase()));
         //Comparamos las fechas de modificacion para quedarnos con el ultimo modificado
         if(ficheros!=null && ficheros.length>0){
             File ultimoFicheroModificado = ficheros[0];
@@ -89,7 +83,7 @@ public class RecursosFicheros {
                         break;
                 }
 
-                mapLibreriaModulos.computeIfAbsent(libreria, k -> new ArrayList<ModuloOrigen>()).add(moduloOrigen);
+                mapLibreriaModulos.computeIfAbsent(libreria, k -> new ArrayList<>()).add(moduloOrigen);
 
             }
         }
@@ -115,6 +109,22 @@ public class RecursosFicheros {
         Files.delete(origen.toPath());
 
     }
+
+    public void descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) {
+
+        try (BufferedInputStream in = new BufferedInputStream(urlOrigen.openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(Paths.get(rutaDestino, nombreDestino).toString())) {
+
+            byte[] dataBuffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }
 
