@@ -1,0 +1,34 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson" >
+    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/monitorizacionAdabas/css/global.css"/>
+    <t:summary icon="${it.icon}">
+            <p><b>Monitorización Adabas</b>: Finalizar prueba</p>
+        <p><div class="cuerpoA">
+                <b>Aplicación</b>: ${it.resultado.app} <br/>
+                <b>Release</b>: ${it.resultado.version} <br/>
+                <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
+                <b>Código final de ejecución</b>: ${it.resultado.codigo}
+            </div>
+            <div class="cuerpoB">
+                <ul>
+                       <li>
+                           Ejecución de servicio <i>desplegarRelease</i>:<br/>
+                           <div class="marg-i-10">
+                               Código de retorno &amp;rarr; ${it.resultado.DR_codDesplegarRelease}<br/>
+                               Descripción final &amp;rarr; ${it.resultado.DR_descDesplegarRelease}<br/>
+                           </div>
+
+                       </li>
+                        <li>
+                            Ejecución de servicio <i>releaseDesplegada</i>:<br/>
+                            <div class="marg-i-10">
+                                Código de retorno &amp;rarr; ${it.resultado.DR_codReleaseDesplegada}<br/>
+                                Descripción final &amp;rarr; ${it.resultado.DR_descReleaseDesplegada}<br/>
+                            </div>
+                        </li>
+                    </ul>
+            </div>
+        </p>
+
+    </t:summary>
+</j:jelly>

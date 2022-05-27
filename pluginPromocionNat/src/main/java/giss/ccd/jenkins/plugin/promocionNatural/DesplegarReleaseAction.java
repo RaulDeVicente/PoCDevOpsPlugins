@@ -11,7 +11,7 @@ public class DesplegarReleaseAction implements Action {
 
     public DesplegarReleaseAction(Resultado resultado) {
         this.resultado = resultado;
-        this.icon = "/plugin/promocionNatural/imagenes/desplegar_ico.png";
+        this.icon = "/plugin/promocionNatural/imagenes/summary_ico.png";
     }
 
     public Resultado getResultado() {

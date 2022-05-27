@@ -1,16 +1,17 @@
-package giss.ccd.jenkins.plugin.promocionNatural;
+package giss.ccd.jenkins.plugin.monAdabas;
 
-import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
+
+import giss.ccd.jenkins.plugin.monAdabas.model.Resultado;
 import hudson.model.Action;
 
-public class EntregarReleaseAction implements Action {
+public class IniciarPruebaAction implements Action {
 
     private Resultado resultado;
     private String icon;
 
-    public EntregarReleaseAction(Resultado resultado) {
+    public IniciarPruebaAction(Resultado resultado) {
         this.resultado = resultado;
-        this.icon = "/plugin/promocionNatural/imagenes/summary_ico.png";
+        this.icon = "/plugin/monitorizacionAdabas/imagenes/summary_ico.png";
     }
 
     public Resultado getResultado() {

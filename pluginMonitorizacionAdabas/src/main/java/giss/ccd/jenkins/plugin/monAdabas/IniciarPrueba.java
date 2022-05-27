@@ -2,6 +2,7 @@ package giss.ccd.jenkins.plugin.monAdabas;
 
 
 import es.seg_social.ccd.monadabas.service.*;
+import giss.ccd.jenkins.plugin.monAdabas.model.Resultado;
 import hudson.*;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
@@ -67,12 +68,13 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
         listener.getLogger().println("Acción al no recibir ticket: " + estadoPruebas);
 
         //Parametros de retorno
-        final Holder<String> ticketPrueba = new Holder<String>();
-        final Holder<String> codRetorno = new Holder<String>();
-        final Holder<String> descRetorno = new Holder<String>();
-        final Holder<String> descRetornoLargo = new Holder<String>();
+        final Holder<String> ticketPrueba = new Holder<>();
+        final Holder<String> codRetorno = new Holder<>();
+        final Holder<String> descRetorno = new Holder<>();
+        final Holder<String> descRetornoLargo = new Holder<>();
 
         String respuesta = "-1";
+        run.setResult(Result.SUCCESS);
 
         try {
            //Se elimina el objeto Elementos/modulos desde version 1.2.0
@@ -144,8 +146,17 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
         }finally {
-            //Creacion de fichero JSON
+            Resultado resultado = new Resultado();
+            resultado.setCodigo(respuesta);
+            resultado.setEstadoFinal(run.getResult().toString());
+            resultado.setApp(aplicacion);
+            resultado.setVersion(version);
+            resultado.setIP_codIniciarPrueba(codRetorno.value);
+            resultado.setIP_descIniciarPrueba(descRetorno.value);
+            resultado.setIP_descLargaIniciarPrueba(descRetornoLargo.value);
+
             try {
+                //Creacion de fichero JSON
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objServicio = new JSONObject();
 
@@ -172,11 +183,15 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                 listener.getLogger().println("Descripción: " + Objects.toString(descRetorno.value,""));
                 listener.getLogger().println("Descripcion larga: " + Objects.toString(descRetornoLargo.value,""));
 
+                run.addAction(new IniciarPruebaAction(resultado));
+
                 }catch (RuntimeException e) {
                     listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                     listener.error(e.getMessage());
                     listener.getLogger().println(e.getCause());
                     run.setResult(Result.FAILURE);
+                    resultado.setEstadoFinal(run.getResult().toString());
+                    run.addAction(new IniciarPruebaAction(resultado));
                 }
         }
 

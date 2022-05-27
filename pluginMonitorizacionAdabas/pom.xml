@@ -8,7 +8,7 @@
         <relativePath />
     </parent>
     <groupId>giss.ccd.jenkins.plugin</groupId>
-    <artifactId>monitorizacionAdabas-${revision}</artifactId>
+    <artifactId>monitorizacionAdabas</artifactId>
     <version>${revision}</version>
     <packaging>hpi</packaging>
 <!--

@@ -24,6 +24,7 @@ import java.io.IOException;
 //import java.net.MalformedURLException;
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
+import java.net.URI;
 import java.util.Objects;
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
 
@@ -77,20 +78,23 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
     public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
-
+        URI urlMonada = URI.create(ConfiguracionGlobal.get().getUrlMonada());
         listener.getLogger().println("Endpoint: " + endpoint);
         listener.getLogger().println("TicketPrueba: " + ticketPrueba);
         listener.getLogger().println("Intervalo Pool: " + intervaloPooling);
         listener.getLogger().println("Timeout Pool: " + timeoutPooling);
+        listener.getLogger().println("URL Monada: " + urlMonada);
 
         //Parametros de retorno
         final Holder<String> codRetornoFinalizarPrueba = new Holder<String>();
         final Holder<String> descRetornoFinalizarPrueba = new Holder<String>();
         final Holder<String> descRetornoLargoFinalizarPrueba = new Holder<String>();
 
+        final Holder<String> nombreFicheroResumen = new Holder<String>();
+        final Holder<String> nombreFicheroDetalle = new Holder<String>();
         final Holder<String> codRetornoPruebaFinalizada = new Holder<String>();
         final Holder<String> descRetornoPruebaFinalizada = new Holder<String>();
-        final Holder<String> descRetornoLargoPruebaFinalizada = new Holder<String>();
+
 
 
         String respuesta="-1";
@@ -132,9 +136,10 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                         servicio.inicializarServicioMonitAdabas(endpoint).pruebaFinalizada(
                                 ticketPrueba,
                                 pendienteFinalizar,
+                                nombreFicheroResumen,
+                                nombreFicheroDetalle,
                                 codRetornoPruebaFinalizada,
-                                descRetornoPruebaFinalizada,
-                                descRetornoLargoPruebaFinalizada);
+                                descRetornoPruebaFinalizada);
                     } finally {
                         t.setContextClassLoader(orig);
                     }
@@ -190,7 +195,18 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
                 objPruebaFinalizada.put("codRetorno", codRetornoPruebaFinalizada.value);
                 objPruebaFinalizada.put("descRetorno",descRetornoPruebaFinalizada.value);
-                objPruebaFinalizada.put("descRetornoLargo", descRetornoLargoPruebaFinalizada.value);
+
+                String urlFicheroResumen ="";
+
+                if(nombreFicheroResumen!=null && !nombreFicheroResumen.value.isEmpty()) {
+                    urlFicheroResumen = urlMonada.resolve(nombreFicheroResumen.value).toString();
+                }
+                objPruebaFinalizada.put("urlFicheroResumen", urlMonada.resolve(nombreFicheroResumen.value));
+                String urlFicheroDetalle ="";
+
+                if(nombreFicheroDetalle!=null && !nombreFicheroDetalle.value.isEmpty()) {
+                    objPruebaFinalizada.put("urlFicheroDetalle", urlMonada.resolve(nombreFicheroDetalle.value));
+                }
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("respuestaFinalizarPrueba",objFinalizarPrueba);
@@ -208,7 +224,8 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                     listener.getLogger().println("Respuesta del servicio pruebaFinalizada:");
                     listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoPruebaFinalizada.value, ""));
                     listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoPruebaFinalizada.value, ""));
-                    listener.getLogger().println(" - Descripcion larga: " + Objects.toString(descRetornoLargoPruebaFinalizada.value, ""));
+                    listener.getLogger().println(" - URL Fichero Resumen: " + urlMonada.resolve(Objects.toString(nombreFicheroResumen.value,"")));
+                    listener.getLogger().println(" - URL Fichero Detalle: " + urlMonada.resolve(Objects.toString(nombreFicheroDetalle.value,"")));
                 }
                 listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(urlFichero).toString());
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
