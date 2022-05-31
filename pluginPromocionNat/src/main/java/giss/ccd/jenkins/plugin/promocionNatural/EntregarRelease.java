@@ -7,6 +7,7 @@ import es.seg_social.ccd.promocionnatservice.Libreria;
 import es.seg_social.ccd.promocionnatservice.Modulo;
 import es.seg_social.ccd.promocionnatservice.Modulos;
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
+import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
 import giss.ccd.jenkins.plugin.util.RecursosFicheros;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
@@ -84,13 +85,12 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
         RecursosFicheros utilFicheros = new RecursosFicheros();
         File ultimoFicheroModificado = utilFicheros.ultimoFicheroModificado(rutaFichero, ConfiguracionGlobal.get().getPatronFichero());
 
-
-
         //Parametros de retorno
         Holder<String> codRetorno = new Holder<>();
         Holder<String> descRetorno = new Holder<>();
 
         String respuesta = "-1";
+        run.setResult(Result.SUCCESS);
         int contadorModulos = 0;
         try {
             //Parseo del fichero de modulos
@@ -181,36 +181,57 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
         }finally {
-            //Creacion de fichero JSON
+            //Creación de objeto de respuesta para pintar datos en pantalla
+            Resultado resultado = new Resultado();
+            resultado.setCodigo(respuesta);
+            resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+            resultado.setApp(aplicacion);
+            resultado.setVersion(version);
+            resultado.setER_codEntregarRelease(Objects.toString(codRetorno.value,""));
+            resultado.setER_descEntregarRelease(Objects.toString(descRetorno.value,""));
+            if(ultimoFicheroModificado == null){
+                resultado.setER_fichero(Messages.DescriptorImpl_excepciones_noExisteFichero());
+            }else{
+                resultado.setER_fichero(ultimoFicheroModificado.getName());
+            }
+            resultado.setER_proceso(proceso);
+            resultado.setER_modulosProcesados(contadorModulos);
+
             try {
+
+                //Creacion de fichero JSON
+
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objServicio = new JSONObject();
 
-                objServicio.put("codRetorno", codRetorno.value);
-                objServicio.put("descRetorno",descRetorno.value);
+                objServicio.put("codRetorno", resultado.getER_codEntregarRelease() );
+                objServicio.put("descRetorno",  resultado.getER_descEntregarRelease());
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("modulosProcesados", contadorModulos);
-                objPlugin.put("respuestaServicio",objServicio);
+                objPlugin.put("respuestaServicio", objServicio);
 
                 EnvVars envVars=run.getEnvironment(listener);
-                String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
-                String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
+                String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
                 UtilJSON utilJSON= new UtilJSON();
+                utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
+                listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(rutaBuildLocal).toString());
 
-                listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(urlFichero).toString());
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
-                listener.getLogger().println("Código de retorno: " + Objects.toString(codRetorno.value,""));
-                listener.getLogger().println("Descripción: " + Objects.toString(descRetorno.value,""));
+                listener.getLogger().println("Código de retorno: " + resultado.getER_codEntregarRelease());
+                listener.getLogger().println("Descripción: " + resultado.getER_descEntregarRelease());
+
+                run.addAction(new EntregarReleaseAction(resultado));
 
             }catch (Exception e) {
                 listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                run.addAction(new EntregarReleaseAction(resultado));
             }
         }
     }

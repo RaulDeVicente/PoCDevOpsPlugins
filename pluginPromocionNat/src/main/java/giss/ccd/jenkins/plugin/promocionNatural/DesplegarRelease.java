@@ -3,6 +3,7 @@ package giss.ccd.jenkins.plugin.promocionNatural;
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
 import es.seg_social.ccd.promocionnatservice.GissCcdNatDevOpsNtdoPromocionWsPromocionNatService;
 import es.seg_social.ccd.promocionnatservice.PromocionNatServicePortType;
+import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.SoapFaultHandler;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
@@ -55,9 +56,9 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
     /**
      * Instantiates a new DesplegarRelease.
      *
-     * @param aplicacion
-     * @param version
-     * @param entornoDestino
+     * @param aplicacion Aplicación
+     * @param version Versión
+     * @param entornoDestino Entorno de destino
      */
     @DataBoundConstructor
     public DesplegarRelease(String aplicacion,
@@ -111,13 +112,14 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
 
 
         //Parametros de retorno
-        final Holder<String> codRetornoDesplegarRelease = new Holder<String>();
-        final Holder<String> descRetornoDesplegarRelease = new Holder<String>();
+        final Holder<String> codRetornoDesplegarRelease = new Holder<>();
+        final Holder<String> descRetornoDesplegarRelease = new Holder<>();
 
-        final Holder<String> codRetornoReleaseDesplegada = new Holder<String>();
-        final Holder<String> descRetornoReleaseDesplegada = new Holder<String>();
+        final Holder<String> codRetornoReleaseDesplegada = new Holder<>();
+        final Holder<String> descRetornoReleaseDesplegada = new Holder<>();
 
         String respuesta = "-1";
+        run.setResult(Result.SUCCESS);
 
         try {
             //Llamada al servicio
@@ -147,7 +149,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             if(respuesta!=null && respuesta.equals("0")) {
                 int tiempoConsumido = 0;
                 String finalizado = "-1";
-                final Holder<String> pendienteFinalizar = new Holder<String>();
+                final Holder<String> pendienteFinalizar = new Holder<>();
                 while (timeoutPooling >= tiempoConsumido) {
                     t.setContextClassLoader(ServicioPromocionNat.class.getClassLoader());
                     try {
@@ -200,54 +202,71 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
         }finally {
-            //Creacion de fichero JSON
+
+            if(!respuesta.equals("0")) {
+                listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
+                switch (estadoRetorno.toUpperCase()){
+                    case "SUCCESS": run.setResult(Result.SUCCESS);
+                        break;
+                    case "UNSTABLE": run.setResult(Result.UNSTABLE);
+                        break;
+                    default : run.setResult(Result.FAILURE);
+                        break;
+                }
+            }
+
+            //Creación de objeto de respuesta para pintar datos en pantalla
+            Resultado resultado = new Resultado();
+            resultado.setCodigo(respuesta);
+            resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+            resultado.setApp(aplicacion);
+            resultado.setVersion(version);
+            resultado.setDR_codDesplegarRelease(Objects.toString(codRetornoDesplegarRelease.value, ""));
+            resultado.setDR_descDesplegarRelease(Objects.toString(descRetornoDesplegarRelease.value, ""));
+            resultado.setDR_codReleaseDesplegada(Objects.toString(codRetornoReleaseDesplegada.value, ""));
+            resultado.setDR_descReleaseDesplegada( Objects.toString(descRetornoReleaseDesplegada.value, ""));
             try {
+
+
+                //Creacion de fichero JSON
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objDesplegarRelease = new JSONObject();
                 JSONObject objReleaseDesplegada = new JSONObject();
 
-                objDesplegarRelease.put("codRetorno", codRetornoDesplegarRelease.value);
-                objDesplegarRelease.put("descRetorno",descRetornoDesplegarRelease.value);
+                objDesplegarRelease.put("codRetorno", resultado.getDR_codDesplegarRelease());
+                objDesplegarRelease.put("descRetorno",resultado.getDR_descDesplegarRelease());
 
-                objReleaseDesplegada.put("codRetorno", codRetornoReleaseDesplegada.value);
-                objReleaseDesplegada.put("descRetorno",descRetornoReleaseDesplegada.value);
+                objReleaseDesplegada.put("codRetorno", resultado.getDR_codReleaseDesplegada());
+                objReleaseDesplegada.put("descRetorno",resultado.getDR_descReleaseDesplegada());
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("respuestaDesplegarRelease",objDesplegarRelease);
                 objPlugin.put("respuestaReleaseDesplegada",objReleaseDesplegada);
 
                 EnvVars envVars=run.getEnvironment(listener);
-                String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
-                String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
+                String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
                 UtilJSON utilJSON= new UtilJSON();
+                utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
 
                 if(codRetornoReleaseDesplegada.value!=null) {
                     listener.getLogger().println("Respuesta del servicio releaseDesplegada:");
-                    listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoReleaseDesplegada.value, ""));
-                    listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoReleaseDesplegada.value, ""));
+                    listener.getLogger().println(" - Código de retorno: " + resultado.getDR_codReleaseDesplegada());
+                    listener.getLogger().println(" - Descripción: " + resultado.getDR_descReleaseDesplegada());
                 }
-                listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(urlFichero).toString());
+                listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(rutaBuildLocal));
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
 
-                if(!respuesta.equals("0")) {
-                    listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
-                    switch (estadoRetorno.toUpperCase()){
-                        case "SUCCESS": run.setResult(Result.SUCCESS);
-                            break;
-                        case "UNSTABLE": run.setResult(Result.UNSTABLE);
-                            break;
-                        default : run.setResult(Result.FAILURE);
-                            break;
-                    }
-                }
+                run.addAction(new DesplegarReleaseAction(resultado));
+
             }catch (RuntimeException e) {
                 listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                run.addAction(new DesplegarReleaseAction(resultado));
             }
         }
     }

@@ -26,14 +26,15 @@ public class UtilJSON {
      * @param ruta          Ruta en la que se generara el fichero JSON
      * @param nombreFichero Nombre del fichero JSON
      * @throws IOException io exception
+     * @return String ruta del fichero completa
     */
-     public void guardarJSON(JSONObject json, String ruta, String nombreFichero) throws IOException {
+     public String guardarJSON(JSONObject json, String ruta, String nombreFichero) throws IOException {
 
        String jsonString = json.toString();
         File directorio = new File(ruta);
         PrintWriter writer;
         if (!directorio.exists()){
-            directorio.mkdir();
+            directorio.mkdirs();
         }
         String urlFichero = Paths.get(ruta, nombreFichero + EXT_JSON).toString();
         writer = new PrintWriter(new FileWriter(urlFichero));
@@ -43,6 +44,7 @@ public class UtilJSON {
             writer.flush();
             writer.close();
         }
+        return urlFichero;
     }
 
 }

@@ -14,5 +14,8 @@
         <f:entry title="${%Puerto}" field="puerto">
             <f:textbox />
         </f:entry>
+        <f:entry title="${%UrlMonada}" field="urlMonada">
+            <f:textbox />
+        </f:entry>
     </f:section>
 </j:jelly>

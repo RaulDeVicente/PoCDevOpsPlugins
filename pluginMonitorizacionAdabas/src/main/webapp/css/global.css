@@ -1,0 +1,19 @@
+.cuerpoA{
+    margin-left:15px;
+    border-left: 5px outset #d7b442;
+    padding-left: 10px;
+    padding-bottom:0px;
+    margin-bottom:0px;
+}
+
+.cuerpoB{
+    padding-top:5px;
+    margin-top:-10px;
+    margin-left:15px;
+    border-left: 5px dashed #d7b442;
+    padding-left: 10px;
+}
+
+.marg-i-10{
+    margin-left:10px
+}

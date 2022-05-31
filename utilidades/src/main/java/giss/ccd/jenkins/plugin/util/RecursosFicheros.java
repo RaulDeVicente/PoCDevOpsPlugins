@@ -2,10 +2,8 @@ package giss.ccd.jenkins.plugin.util;
 
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -35,11 +33,7 @@ public class RecursosFicheros {
     public File ultimoFicheroModificado(String directorio, String patron) {
         // Recuperamos los ficheros desde el directorio y patron indicados
         File f = new File(directorio);
-        File[] ficheros = f.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toUpperCase().contains(patron.toUpperCase());
-            }
-        });
+        File[] ficheros = f.listFiles((dir, name) -> name.toUpperCase().contains(patron.toUpperCase()));
         //Comparamos las fechas de modificacion para quedarnos con el ultimo modificado
         if(ficheros!=null && ficheros.length>0){
             File ultimoFicheroModificado = ficheros[0];
@@ -89,7 +83,7 @@ public class RecursosFicheros {
                         break;
                 }
 
-                mapLibreriaModulos.computeIfAbsent(libreria, k -> new ArrayList<ModuloOrigen>()).add(moduloOrigen);
+                mapLibreriaModulos.computeIfAbsent(libreria, k -> new ArrayList<>()).add(moduloOrigen);
 
             }
         }
@@ -109,12 +103,59 @@ public class RecursosFicheros {
         File directorio = new File(rutaDestino);
 
         if (!directorio.exists()){
-            directorio.mkdir();
+            directorio.mkdirs();
         }
         Files.copy(origen.toPath(),  Paths.get(rutaDestino, nombreDestino), StandardCopyOption.REPLACE_EXISTING);
         Files.delete(origen.toPath());
 
     }
+
+    /**
+     * Descargar un fichero desde una url.
+     *
+     * @param urlOrigen URL origen.
+     * @param rutaDestino String ruta destino.
+     * @param nombreDestino String nombre destino.
+     */
+    public void descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) throws IOException {
+        BufferedInputStream inputStream = null;
+        FileOutputStream outputStream = null;
+
+        try {
+            File directorio = new File(rutaDestino);
+            if (!directorio.exists()){
+                directorio.mkdirs();
+            }
+
+            inputStream = new BufferedInputStream(urlOrigen.openStream());
+            outputStream = new FileOutputStream(Paths.get(rutaDestino,nombreDestino).toString());
+
+            byte[] data =new byte[1024];
+            int count;
+            while((count=inputStream.read(data,0,1024))!=-1){
+                outputStream.write(data,0,count);
+            }
+        } catch (IOException e) {
+            throw e;
+        }finally {
+            try{
+                if (inputStream!=null){
+                    inputStream.close();
+                }
+                if (outputStream!=null){
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+
+
+
+
+
+    }
+
 
 }
 

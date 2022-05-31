@@ -1,0 +1,28 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson" >
+    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/monitorizacionAdabas/css/global.css"/>
+    <t:summary icon="${it.icon}">
+        <p><b>Monitorización Adabas</b>: Iniciar prueba</p>
+        <p><div class="cuerpoA">
+                <b>Aplicación</b>: ${it.resultado.app} <br/>
+                <b>Release</b>: ${it.resultado.version} <br/>
+                <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
+                <b>Código final de ejecución</b>: ${it.resultado.codigo}
+            </div>
+            <div class="cuerpoB">
+                <ul>
+                       <li>
+                           Ejecución de servicio <i>iniciarPrueba</i>:<br/>
+                           <div class="marg-i-10">
+                               Código de retorno &amp;rarr; ${it.resultado.IP_codIniciarPrueba}<br/>
+                               Descripción final &amp;rarr; ${it.resultado.IP_descIniciarPrueba}<br/>
+                               Descripción final &amp;rarr; ${it.resultado.IP_descLargaIniciarPrueba}<br/>
+                           </div>
+
+                       </li>
+                    </ul>
+            </div>
+        </p>
+
+    </t:summary>
+</j:jelly>
