@@ -43,7 +43,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
 
     private static final String TRUE = "true";
     private static final String FALSE = "false";
-    private final static String PREFIJO_JSON= "iniciarPruebaOutput_";
+    private final static String PREFIJO_JSON= "iniciarPruebaOutput";
     private final static String OPERACION= "monitorizacionAdabas";
 
     @DataBoundConstructor
@@ -120,68 +120,68 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
 
            //En el caso de que no se reciba ticket, se marca la ejecucion como se ha indicado en la ejecucion
            if(ticketPrueba.value==null || ticketPrueba.value.isEmpty()) {
-               listener.error(Messages.DescriptorImpl_excepciones_noExisteTicket());
-               switch (estadoPruebas.toUpperCase()) {
-                   case "SUCCESS":
-                       run.setResult(Result.SUCCESS);
-                       break;
-                   case "UNSTABLE":
-                       run.setResult(Result.UNSTABLE);
-                       break;
-                   default : run.setResult(Result.FAILURE);
-                       break;
-               }
-           }
+                    listener.error(Messages.DescriptorImpl_excepciones_noExisteTicket());
+                    switch (estadoPruebas.toUpperCase()) {
+                        case "SUCCESS":
+                            run.setResult(Result.SUCCESS);
+                            break;
+                        case "UNSTABLE":
+                            run.setResult(Result.UNSTABLE);
+                            break;
+                        default : run.setResult(Result.FAILURE);
+                            break;
+                    }
+                }
 
-        }catch (MalformedURLException e) {
-            listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
-            listener.error(e.getMessage());
-            listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
-        }catch (ServerSOAPFaultException e) {
-            listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
-        }catch (Exception e) {
-            listener.error(e.getMessage());
-            listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
-        }finally {
-            Resultado resultado = new Resultado();
-            resultado.setCodigo(respuesta);
-            resultado.setEstadoFinal(run.getResult().toString());
-            resultado.setApp(aplicacion);
-            resultado.setVersion(version);
-            resultado.setIP_codIniciarPrueba(codRetorno.value);
-            resultado.setIP_descIniciarPrueba(descRetorno.value);
-            resultado.setIP_descLargaIniciarPrueba(descRetornoLargo.value);
+            }catch (MalformedURLException e) {
+                listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
+                listener.error(e.getMessage());
+                listener.getLogger().println(e.getCause());
+                run.setResult(Result.FAILURE);
+            }catch (ServerSOAPFaultException e) {
+                listener.error(e.getMessage());
+                run.setResult(Result.FAILURE);
+            }catch (Exception e) {
+                listener.error(e.getMessage());
+                listener.getLogger().println(e.getCause());
+                run.setResult(Result.FAILURE);
+            }finally {
+                //Creación de objeto de respuesta para pintar datos en pantalla
+                Resultado resultado = new Resultado();
+                resultado.setCodigo(respuesta);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setApp(aplicacion);
+                resultado.setVersion(version);
+                resultado.setTicketPrueba(Objects.toString(ticketPrueba.value,""));
+                resultado.setIP_codIniciarPrueba(Objects.toString(codRetorno.value,""));
+                resultado.setIP_descIniciarPrueba(Objects.toString(descRetorno.value,""));
+                resultado.setIP_descLargaIniciarPrueba(Objects.toString(descRetornoLargo.value,""));
 
-            try {
-                //Creacion de fichero JSON
-                JSONObject objPlugin = new JSONObject();
-                JSONObject objServicio = new JSONObject();
+                try {
+                    //Creacion de fichero JSON
+                    JSONObject objPlugin = new JSONObject();
+                    JSONObject objServicio = new JSONObject();
 
-                objServicio.put("ticketPrueba", ticketPrueba.value);
-                objServicio.put("codRetorno", codRetorno.value);
-                objServicio.put("descRetorno",descRetorno.value);
-                objServicio.put("descRetornoLargo", descRetornoLargo.value);
+                    objServicio.put("ticketPrueba", resultado.getTicketPrueba());
+                    objServicio.put("codRetorno", resultado.getIP_codIniciarPrueba());
+                    objServicio.put("descRetorno",resultado.getIP_descIniciarPrueba());
+                    objServicio.put("descRetornoLargo", resultado.getIP_descLargaIniciarPrueba());
 
-                objPlugin.put("respuesta", respuesta);
-                objPlugin.put("respuestaServicio",objServicio);
+                    objPlugin.put("respuesta", respuesta);
+                    objPlugin.put("respuestaServicio",objServicio);
 
-                EnvVars envVars=run.getEnvironment(listener);
-                String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
-                String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
+                    EnvVars envVars=run.getEnvironment(listener);
+                    String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
-                UtilJSON utilJSON= new UtilJSON();
+                    UtilJSON utilJSON= new UtilJSON();
+                    utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
-
-                listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(urlFichero).toString());
-                listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
-                listener.getLogger().println("Ticket de prueba: " + Objects.toString(ticketPrueba.value,""));
-                listener.getLogger().println("Código de retorno: " + Objects.toString(codRetorno.value,""));
-                listener.getLogger().println("Descripción: " + Objects.toString(descRetorno.value,""));
-                listener.getLogger().println("Descripcion larga: " + Objects.toString(descRetornoLargo.value,""));
+                    listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(rutaBuildLocal).toString());
+                    listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
+                    listener.getLogger().println("Ticket de prueba: " + resultado.getTicketPrueba());
+                    listener.getLogger().println("Código de retorno: " + resultado.getIP_codIniciarPrueba());
+                listener.getLogger().println("Descripción: " + resultado.getIP_descIniciarPrueba());
+                listener.getLogger().println("Descripcion larga: " + resultado.getIP_descLargaIniciarPrueba());
 
                 run.addAction(new IniciarPruebaAction(resultado));
 
@@ -190,7 +190,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                     listener.error(e.getMessage());
                     listener.getLogger().println(e.getCause());
                     run.setResult(Result.FAILURE);
-                    resultado.setEstadoFinal(run.getResult().toString());
+                    resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
                     run.addAction(new IniciarPruebaAction(resultado));
                 }
         }

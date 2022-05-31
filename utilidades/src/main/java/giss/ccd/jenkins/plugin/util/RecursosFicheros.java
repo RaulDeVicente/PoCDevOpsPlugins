@@ -103,26 +103,57 @@ public class RecursosFicheros {
         File directorio = new File(rutaDestino);
 
         if (!directorio.exists()){
-            directorio.mkdir();
+            directorio.mkdirs();
         }
         Files.copy(origen.toPath(),  Paths.get(rutaDestino, nombreDestino), StandardCopyOption.REPLACE_EXISTING);
         Files.delete(origen.toPath());
 
     }
 
-    public void descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) {
+    /**
+     * Descargar un fichero desde una url.
+     *
+     * @param urlOrigen URL origen.
+     * @param rutaDestino String ruta destino.
+     * @param nombreDestino String nombre destino.
+     */
+    public void descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) throws IOException {
+        BufferedInputStream inputStream = null;
+        FileOutputStream outputStream = null;
 
-        try (BufferedInputStream in = new BufferedInputStream(urlOrigen.openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(Paths.get(rutaDestino, nombreDestino).toString())) {
+        try {
+            File directorio = new File(rutaDestino);
+            if (!directorio.exists()){
+                directorio.mkdirs();
+            }
 
-            byte[] dataBuffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            inputStream = new BufferedInputStream(urlOrigen.openStream());
+            outputStream = new FileOutputStream(Paths.get(rutaDestino,nombreDestino).toString());
+
+            byte[] data =new byte[1024];
+            int count;
+            while((count=inputStream.read(data,0,1024))!=-1){
+                outputStream.write(data,0,count);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw e;
+        }finally {
+            try{
+                if (inputStream!=null){
+                    inputStream.close();
+                }
+                if (outputStream!=null){
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                throw e;
+            }
         }
+
+
+
+
+
     }
 
 

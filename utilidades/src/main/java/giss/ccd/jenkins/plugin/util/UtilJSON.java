@@ -34,7 +34,7 @@ public class UtilJSON {
         File directorio = new File(ruta);
         PrintWriter writer;
         if (!directorio.exists()){
-            directorio.mkdir();
+            directorio.mkdirs();
         }
         String urlFichero = Paths.get(ruta, nombreFichero + EXT_JSON).toString();
         writer = new PrintWriter(new FileWriter(urlFichero));

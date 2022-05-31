@@ -1,7 +1,9 @@
 package giss.ccd.jenkins.plugin.monAdabas;
 
 
+import giss.ccd.jenkins.plugin.monAdabas.model.Resultado;
 import giss.ccd.jenkins.plugin.monAdabas.ws.ServicioMonAdabas;
+import giss.ccd.jenkins.plugin.util.RecursosFicheros;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
 import hudson.*;
 import hudson.model.AbstractProject;
@@ -23,6 +25,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 //import java.net.MalformedURLException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.net.URI;
 import java.util.Objects;
@@ -37,7 +40,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
     private String estadoRetorno;
     private int intervaloPooling = 60;
     private int timeoutPooling = 600;
-    private final static String PREFIJO_JSON= "finalizarPruebaOutput_";
+    private final static String PREFIJO_JSON= "finalizarPruebaOutput";
     private final static String OPERACION= "monitorizacionAdabas";
 
     /**
@@ -95,10 +98,8 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
         final Holder<String> codRetornoPruebaFinalizada = new Holder<String>();
         final Holder<String> descRetornoPruebaFinalizada = new Holder<String>();
 
-
-
         String respuesta="-1";
-
+        run.setResult(Result.SUCCESS);
         try {
             //Llamada al servicio
             ServicioMonAdabas servicio = new ServicioMonAdabas();
@@ -168,7 +169,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                         listener.getLogger().println("Esperando a la finalización del análisis de las pruebas. Volviendo a llamar al servicio en " + intervaloPooling + " segundos...");
                         Thread.sleep(intervaloPooling * 1000);
                     }
-                }
+               }
             }
         } catch (MalformedURLException e) {
             listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
@@ -183,69 +184,102 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
         } finally {
-            //Creacion de fichero JSON
+            if(!respuesta.equals("0")) {
+                listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
+                switch (estadoRetorno.toUpperCase()){
+                    case "SUCCESS": run.setResult(Result.SUCCESS);
+                        break;
+                    case "UNSTABLE": run.setResult(Result.UNSTABLE);
+                        break;
+                    default : run.setResult(Result.FAILURE);
+                        break;
+                }
+            }
+
+            //Creación de objeto de respuesta para pintar datos en pantalla
+            Resultado resultado = new Resultado();
+            resultado.setCodigo(respuesta);
+            resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+            resultado.setTicketPrueba(ticketPrueba);
+            resultado.setFP_codFinalizarPrueba(Objects.toString(codRetornoFinalizarPrueba.value, ""));
+            resultado.setFP_descFinalizarPrueba(Objects.toString(descRetornoFinalizarPrueba.value, ""));
+            resultado.setFP_descLargaFinalizarPrueba(Objects.toString(descRetornoLargoFinalizarPrueba.value, ""));
+
+            resultado.setFP_codPruebaFinalizada(Objects.toString(codRetornoPruebaFinalizada.value, ""));
+            resultado.setFP_descPruebaFinalizada(Objects.toString(descRetornoPruebaFinalizada.value, ""));
+
             try {
+                //Descarga de informes (url base de Monada + nombre recibido)
+
+                EnvVars envVars=run.getEnvironment(listener);
+                String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
+                String urlFicheroResumen ="";
+                String urlFicheroDetalle ="";
+
+                if(nombreFicheroResumen.value!=null && !nombreFicheroResumen.value.isEmpty()) {
+                    nombreFicheroResumen.value+=".pdf";
+                    urlFicheroResumen = urlMonada.resolve(nombreFicheroResumen.value).toString();
+                    RecursosFicheros recursosFicheros = new RecursosFicheros();
+                    URL url = new URL(urlFicheroResumen);
+                    recursosFicheros.descargarFicheroURL(url, rutaBuildLocal,  nombreFicheroResumen.value);
+                }
+
+                if(nombreFicheroResumen.value!=null && !nombreFicheroResumen.value.isEmpty()) {
+                    nombreFicheroDetalle.value+=".pdf";
+                    urlFicheroDetalle = urlMonada.resolve(nombreFicheroDetalle.value).toString();
+                    RecursosFicheros recursosFicheros = new RecursosFicheros();
+                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroDetalle), rutaBuildLocal,  nombreFicheroDetalle.value);
+                }
+
+                resultado.setFP_urlFicheroResumen(urlFicheroResumen);
+                resultado.setFP_urlFicheroDetalle(urlFicheroDetalle);
+
+                //Creacion de fichero JSON
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objFinalizarPrueba = new JSONObject();
                 JSONObject objPruebaFinalizada = new JSONObject();
 
-                objFinalizarPrueba.put("codRetorno", codRetornoFinalizarPrueba.value);
-                objFinalizarPrueba.put("descRetorno",descRetornoFinalizarPrueba.value);
-                objFinalizarPrueba.put("descRetornoLargo", descRetornoLargoFinalizarPrueba.value);
+                objFinalizarPrueba.put("codRetorno", resultado.getFP_codFinalizarPrueba());
+                objFinalizarPrueba.put("descRetorno",resultado.getFP_descFinalizarPrueba());
+                objFinalizarPrueba.put("descRetornoLargo", resultado.getFP_descLargaFinalizarPrueba());
 
-                objPruebaFinalizada.put("codRetorno", codRetornoPruebaFinalizada.value);
-                objPruebaFinalizada.put("descRetorno",descRetornoPruebaFinalizada.value);
+                objPruebaFinalizada.put("codRetorno", resultado.getFP_codPruebaFinalizada());
+                objPruebaFinalizada.put("descRetorno",resultado.getFP_descPruebaFinalizada());
 
-                String urlFicheroResumen ="";
-
-                if(nombreFicheroResumen!=null && !nombreFicheroResumen.value.isEmpty()) {
-                    urlFicheroResumen = urlMonada.resolve(nombreFicheroResumen.value).toString();
-                }
-                objPruebaFinalizada.put("urlFicheroResumen", urlMonada.resolve(nombreFicheroResumen.value));
-                String urlFicheroDetalle ="";
-
-                if(nombreFicheroDetalle!=null && !nombreFicheroDetalle.value.isEmpty()) {
-                    objPruebaFinalizada.put("urlFicheroDetalle", urlMonada.resolve(nombreFicheroDetalle.value));
-                }
+                objPruebaFinalizada.put("urlFicheroResumen", urlFicheroResumen);
+                objPruebaFinalizada.put("urlFicheroDetalle", urlFicheroDetalle);
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("respuestaFinalizarPrueba",objFinalizarPrueba);
                 objPlugin.put("respuestaPruebaFinalizada",objPruebaFinalizada);
 
-                EnvVars envVars=run.getEnvironment(listener);
-                String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
-                String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
-
                 UtilJSON utilJSON= new UtilJSON();
-
-                utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
+                utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
                 if(codRetornoPruebaFinalizada.value!=null) {
                     listener.getLogger().println("Respuesta del servicio pruebaFinalizada:");
-                    listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoPruebaFinalizada.value, ""));
-                    listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoPruebaFinalizada.value, ""));
-                    listener.getLogger().println(" - URL Fichero Resumen: " + urlMonada.resolve(Objects.toString(nombreFicheroResumen.value,"")));
-                    listener.getLogger().println(" - URL Fichero Detalle: " + urlMonada.resolve(Objects.toString(nombreFicheroDetalle.value,"")));
+                    listener.getLogger().println(" - Código de retorno: " + resultado.getFP_codPruebaFinalizada());
+                    listener.getLogger().println(" - Descripción: " + resultado.getFP_descPruebaFinalizada());
+                    listener.getLogger().println(" - URL Fichero Resumen: " + urlFicheroResumen);
+                    listener.getLogger().println(" - URL Fichero Detalle: " + urlFicheroDetalle);
                 }
-                listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(urlFichero).toString());
+                listener.getLogger().println("Ficheros generados en: " + rutaBuildLocal);
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
 
-                if(!respuesta.equals("0")) {
-                    listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
-                    switch (estadoRetorno.toUpperCase()){
-                        case "SUCCESS": run.setResult(Result.SUCCESS);
-                            break;
-                        case "UNSTABLE": run.setResult(Result.UNSTABLE);
-                            break;
-                        default : run.setResult(Result.FAILURE);
-                            break;
-                    }
-                }
+                run.addAction(new FinalizarPruebaAction(resultado));
             }catch (RuntimeException e) {
                 listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                run.addAction(new FinalizarPruebaAction(resultado));
+            }catch (Exception e) {
+                listener.error(e.getMessage());
+                listener.getLogger().println(e.getCause());
+                run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                run.addAction(new FinalizarPruebaAction(resultado));
             }
         }
     }

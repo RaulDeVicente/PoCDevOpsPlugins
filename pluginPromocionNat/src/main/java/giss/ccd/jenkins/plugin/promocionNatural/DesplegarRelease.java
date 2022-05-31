@@ -103,8 +103,6 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
 
-        run.setResult(Result.SUCCESS);
-
         listener.getLogger().println("Endpoint: " + endpoint);
         listener.getLogger().println("Aplicación: " + aplicacion);
         listener.getLogger().println("Versión: " + version);
@@ -121,6 +119,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
         final Holder<String> descRetornoReleaseDesplegada = new Holder<>();
 
         String respuesta = "-1";
+        run.setResult(Result.SUCCESS);
 
         try {
             //Llamada al servicio
@@ -216,16 +215,16 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 }
             }
 
+            //Creación de objeto de respuesta para pintar datos en pantalla
             Resultado resultado = new Resultado();
             resultado.setCodigo(respuesta);
-            resultado.setEstadoFinal(Objects.requireNonNull(run.getResult()).toString());
+            resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setApp(aplicacion);
             resultado.setVersion(version);
-            resultado.setDR_codDesplegarRelease(codRetornoDesplegarRelease.value);
-            resultado.setDR_descDesplegarRelease(descRetornoDesplegarRelease.value);
-            resultado.setDR_codReleaseDesplegada(codRetornoReleaseDesplegada.value);
-            resultado.setDR_descReleaseDesplegada(descRetornoReleaseDesplegada.value);
-
+            resultado.setDR_codDesplegarRelease(Objects.toString(codRetornoDesplegarRelease.value, ""));
+            resultado.setDR_descDesplegarRelease(Objects.toString(descRetornoDesplegarRelease.value, ""));
+            resultado.setDR_codReleaseDesplegada(Objects.toString(codRetornoReleaseDesplegada.value, ""));
+            resultado.setDR_descReleaseDesplegada( Objects.toString(descRetornoReleaseDesplegada.value, ""));
             try {
 
 
@@ -234,30 +233,29 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 JSONObject objDesplegarRelease = new JSONObject();
                 JSONObject objReleaseDesplegada = new JSONObject();
 
-                objDesplegarRelease.put("codRetorno", codRetornoDesplegarRelease.value);
-                objDesplegarRelease.put("descRetorno",descRetornoDesplegarRelease.value);
+                objDesplegarRelease.put("codRetorno", resultado.getDR_codDesplegarRelease());
+                objDesplegarRelease.put("descRetorno",resultado.getDR_descDesplegarRelease());
 
-                objReleaseDesplegada.put("codRetorno", codRetornoReleaseDesplegada.value);
-                objReleaseDesplegada.put("descRetorno",descRetornoReleaseDesplegada.value);
+                objReleaseDesplegada.put("codRetorno", resultado.getDR_codReleaseDesplegada());
+                objReleaseDesplegada.put("descRetorno",resultado.getDR_descReleaseDesplegada());
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("respuestaDesplegarRelease",objDesplegarRelease);
                 objPlugin.put("respuestaReleaseDesplegada",objReleaseDesplegada);
 
                 EnvVars envVars=run.getEnvironment(listener);
-                String urlFichero = Paths.get(String.valueOf(workspace), OPERACION).toString();
-                String nombreFichero = PREFIJO_JSON + envVars.get("BUILD_ID");
+                String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
                 UtilJSON utilJSON= new UtilJSON();
+                utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                urlFichero =  utilJSON.guardarJSON(objPlugin, urlFichero,nombreFichero);
 
                 if(codRetornoReleaseDesplegada.value!=null) {
                     listener.getLogger().println("Respuesta del servicio releaseDesplegada:");
-                    listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoReleaseDesplegada.value, ""));
-                    listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoReleaseDesplegada.value, ""));
+                    listener.getLogger().println(" - Código de retorno: " + resultado.getDR_codReleaseDesplegada());
+                    listener.getLogger().println(" - Descripción: " + resultado.getDR_descReleaseDesplegada());
                 }
-                listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(urlFichero));
+                listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(rutaBuildLocal));
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
 
                 run.addAction(new DesplegarReleaseAction(resultado));
@@ -267,7 +265,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
-                resultado.setEstadoFinal(run.getResult().toString());
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
                 run.addAction(new DesplegarReleaseAction(resultado));
             }
         }

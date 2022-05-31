@@ -4,26 +4,28 @@
     <t:summary icon="${it.icon}">
             <p><b>Monitorización Adabas</b>: Finalizar prueba</p>
         <p><div class="cuerpoA">
-                <b>Aplicación</b>: ${it.resultado.app} <br/>
-                <b>Release</b>: ${it.resultado.version} <br/>
+                <b>Ticket de prueba</b>: ${it.resultado.ticketPrueba} <br/>
                 <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
                 <b>Código final de ejecución</b>: ${it.resultado.codigo}
             </div>
             <div class="cuerpoB">
                 <ul>
                        <li>
-                           Ejecución de servicio <i>desplegarRelease</i>:<br/>
+                           Ejecución de servicio <i>finalizarPrueba</i>:<br/>
                            <div class="marg-i-10">
-                               Código de retorno &amp;rarr; ${it.resultado.DR_codDesplegarRelease}<br/>
-                               Descripción final &amp;rarr; ${it.resultado.DR_descDesplegarRelease}<br/>
+                               Código de retorno &amp;rarr; ${it.resultado.FP_codFinalizarPrueba}<br/>
+                               Descripción final &amp;rarr; ${it.resultado.FP_descFinalizarPrueba}<br/>
+                               Descripción final larga &amp;rarr; ${it.resultado.FP_descLargaFinalizarPrueba}
                            </div>
 
                        </li>
                         <li>
-                            Ejecución de servicio <i>releaseDesplegada</i>:<br/>
+                            Ejecución de servicio <i>pruebaFinalizada</i>:<br/>
                             <div class="marg-i-10">
-                                Código de retorno &amp;rarr; ${it.resultado.DR_codReleaseDesplegada}<br/>
-                                Descripción final &amp;rarr; ${it.resultado.DR_descReleaseDesplegada}<br/>
+                                Código de retorno &amp;rarr; ${it.resultado.FP_codPruebaFinalizada}<br/>
+                                Descripción final &amp;rarr; ${it.resultado.FP_descPruebaFinalizada}<br/>
+                                Fichero de resumen &amp;rarr; <a href="${it.resultado.FP_urlFicheroResumen}">${it.resultado.FP_urlFicheroResumen}</a><br/>
+                                Fichero de detalle &amp;rarr; <a href="${it.resultado.FP_urlFicheroDetalle}">${it.resultado.FP_urlFicheroDetalle}</a>
                             </div>
                         </li>
                     </ul>
