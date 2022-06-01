@@ -7,8 +7,13 @@
                 <b>Aplicación</b>: ${it.resultado.app} <br/>
                 <b>Release</b>: ${it.resultado.version} <br/>
                 <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
-                <b>Código final de ejecución</b>: ${it.resultado.codigo}
-            </div>
+                <b>Código final de ejecución</b>: ${it.resultado.codigo} <br/>
+                <j:if test="${it.resultado.hayException}">
+                    <div class="error">
+                        <b>ERROR</b>: ${it.resultado.mensajeException} <br/>
+                    </div>
+                </j:if>
+        </div>
             <div class="cuerpoB">
                 <ul>
                        <li>

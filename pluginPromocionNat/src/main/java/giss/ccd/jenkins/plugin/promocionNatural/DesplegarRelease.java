@@ -1,11 +1,9 @@
 package giss.ccd.jenkins.plugin.promocionNatural;
 
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
-import es.seg_social.ccd.promocionnatservice.GissCcdNatDevOpsNtdoPromocionWsPromocionNatService;
-import es.seg_social.ccd.promocionnatservice.PromocionNatServicePortType;
 import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
+import giss.ccd.jenkins.plugin.promocionNatural.util.ConversionString;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
-import giss.ccd.jenkins.plugin.promocionNatural.ws.SoapFaultHandler;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
 import hudson.*;
 import hudson.model.AbstractProject;
@@ -15,10 +13,6 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
-import jakarta.xml.soap.SOAPException;
-import jakarta.xml.ws.handler.Handler;
-import jakarta.xml.ws.handler.HandlerResolver;
-import jakarta.xml.ws.handler.PortInfo;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
 import org.json.JSONObject;
@@ -30,11 +24,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 //import java.net.MalformedURLException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 
@@ -50,7 +40,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
     private int intervaloPooling = 60;
     private int timeoutPooling = 600;
 
-    private final static String PREFIJO_JSON= "desplegarReleaseOutput_";
+    private final static String PREFIJO_JSON= "desplegarReleaseOutput";
     private final static String OPERACION= "promocionNatural";
 
     /**
@@ -110,18 +100,16 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
         listener.getLogger().println("Intervalo Pool: " + intervaloPooling);
         listener.getLogger().println("Timeout Pool: " + timeoutPooling);
 
-
-        //Parametros de retorno
-        final Holder<String> codRetornoDesplegarRelease = new Holder<>();
-        final Holder<String> descRetornoDesplegarRelease = new Holder<>();
-
-        final Holder<String> codRetornoReleaseDesplegada = new Holder<>();
-        final Holder<String> descRetornoReleaseDesplegada = new Holder<>();
+        Resultado resultado = new Resultado();
 
         String respuesta = "-1";
         run.setResult(Result.SUCCESS);
 
         try {
+            //Parametros de retorno
+            final Holder<String> codRetornoDesplegarRelease = new Holder<>();
+            final Holder<String> descRetornoDesplegarRelease = new Holder<>();
+
             //Llamada al servicio
             ServicioPromocionNat servicio = new ServicioPromocionNat();
             Thread t = Thread.currentThread();
@@ -140,6 +128,11 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
 
             if(codRetornoDesplegarRelease.value!=null){
                 respuesta = codRetornoDesplegarRelease.value;
+                resultado.setDR_codDesplegarRelease(codRetornoDesplegarRelease.value);
+            }
+
+            if(descRetornoDesplegarRelease.value!=null){
+                resultado.setDR_descDesplegarRelease(descRetornoDesplegarRelease.value);
             }
 
             listener.getLogger().println("Respuesta del servicio desplegarRelease:");
@@ -147,6 +140,10 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoDesplegarRelease.value,""));
 
             if(respuesta!=null && respuesta.equals("0")) {
+                //Parametros de retorno
+                final Holder<String> codRetornoReleaseDesplegada = new Holder<>();
+                final Holder<String> descRetornoReleaseDesplegada = new Holder<>();
+
                 int tiempoConsumido = 0;
                 String finalizado = "-1";
                 final Holder<String> pendienteFinalizar = new Holder<>();
@@ -166,6 +163,11 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
 
                     if (codRetornoReleaseDesplegada.value != null) {
                         respuesta = codRetornoReleaseDesplegada.value;
+                        resultado.setDR_codReleaseDesplegada(codRetornoReleaseDesplegada.value);
+                    }
+
+                    if (descRetornoReleaseDesplegada.value != null) {
+                        resultado.setDR_descReleaseDesplegada(descRetornoReleaseDesplegada.value);
                     }
 
                     if (pendienteFinalizar.value != null) {
@@ -194,13 +196,22 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }finally {
 
             if(!respuesta.equals("0")) {
@@ -216,15 +227,11 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             }
 
             //Creación de objeto de respuesta para pintar datos en pantalla
-            Resultado resultado = new Resultado();
             resultado.setCodigo(respuesta);
             resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setApp(aplicacion);
             resultado.setVersion(version);
-            resultado.setDR_codDesplegarRelease(Objects.toString(codRetornoDesplegarRelease.value, ""));
-            resultado.setDR_descDesplegarRelease(Objects.toString(descRetornoDesplegarRelease.value, ""));
-            resultado.setDR_codReleaseDesplegada(Objects.toString(codRetornoReleaseDesplegada.value, ""));
-            resultado.setDR_descReleaseDesplegada( Objects.toString(descRetornoReleaseDesplegada.value, ""));
+            resultado.setDR_entornoDestino(ConversionString.recuperarEntorno(entornoDestino));
             try {
 
 
@@ -250,7 +257,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
 
-                if(codRetornoReleaseDesplegada.value!=null) {
+                if(resultado.getDR_codReleaseDesplegada()!=null) {
                     listener.getLogger().println("Respuesta del servicio releaseDesplegada:");
                     listener.getLogger().println(" - Código de retorno: " + resultado.getDR_codReleaseDesplegada());
                     listener.getLogger().println(" - Descripción: " + resultado.getDR_descReleaseDesplegada());
@@ -266,6 +273,19 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setHayException(true);
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                run.addAction(new DesplegarReleaseAction(resultado));
+            }
+            catch (Exception e) {
+                listener.error(e.getMessage());
+                listener.getLogger().println(e.getCause());
+                run.setResult(Result.FAILURE);
+                resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setHayException(true);
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
                 run.addAction(new DesplegarReleaseAction(resultado));
             }
         }

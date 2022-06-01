@@ -67,11 +67,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
         listener.getLogger().println("Versión: " + version);
         listener.getLogger().println("Acción al no recibir ticket: " + estadoPruebas);
 
-        //Parametros de retorno
-        final Holder<String> ticketPrueba = new Holder<>();
-        final Holder<String> codRetorno = new Holder<>();
-        final Holder<String> descRetorno = new Holder<>();
-        final Holder<String> descRetornoLargo = new Holder<>();
+        Resultado resultado = new Resultado();
 
         String respuesta = "-1";
         run.setResult(Result.SUCCESS);
@@ -95,9 +91,14 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                    lPruebas.add(prueba);
                }
            }
+            //Parametros de retorno
+            final Holder<String> ticketPrueba = new Holder<>();
+            final Holder<String> codRetorno = new Holder<>();
+            final Holder<String> descRetorno = new Holder<>();
+            final Holder<String> descRetornoLargo = new Holder<>();
 
-           //Llamada al servicio
-           ServicioMonAdabas servicio = new ServicioMonAdabas();
+            //Llamada al servicio
+            ServicioMonAdabas servicio = new ServicioMonAdabas();
             Thread t = Thread.currentThread();
             ClassLoader orig = t.getContextClassLoader();
             t.setContextClassLoader(ServicioMonAdabas.class.getClassLoader());
@@ -116,9 +117,22 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
 
             if(codRetorno.value!=null){
                 respuesta = codRetorno.value;
+                resultado.setIP_codIniciarPrueba(codRetorno.value);
             }
 
-           //En el caso de que no se reciba ticket, se marca la ejecucion como se ha indicado en la ejecucion
+            if(descRetorno.value!=null){
+                resultado.setIP_descIniciarPrueba(descRetorno.value);
+            }
+
+            if(descRetornoLargo.value!=null){
+                resultado.setIP_descLargaIniciarPrueba(descRetornoLargo.value);
+            }
+
+            if(ticketPrueba.value!=null){
+                resultado.setTicketPrueba(ticketPrueba.value);
+            }
+
+            //En el caso de que no se reciba ticket, se marca la ejecucion como se ha indicado en la ejecucion
            if(ticketPrueba.value==null || ticketPrueba.value.isEmpty()) {
                     listener.error(Messages.DescriptorImpl_excepciones_noExisteTicket());
                     switch (estadoPruebas.toUpperCase()) {
@@ -132,30 +146,34 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                             break;
                     }
                 }
-
-            }catch (MalformedURLException e) {
-                listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
-                listener.error(e.getMessage());
-                listener.getLogger().println(e.getCause());
-                run.setResult(Result.FAILURE);
-            }catch (ServerSOAPFaultException e) {
-                listener.error(e.getMessage());
-                run.setResult(Result.FAILURE);
-            }catch (Exception e) {
-                listener.error(e.getMessage());
-                listener.getLogger().println(e.getCause());
-                run.setResult(Result.FAILURE);
+            }
+        catch (MalformedURLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
+            listener.error(e.getMessage());
+            listener.getLogger().println(e.getCause());
+            run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+        }catch (ServerSOAPFaultException e) {
+            listener.error(e.getMessage());
+            run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+        }catch (Exception e) {
+            listener.error(e.getMessage());
+            listener.getLogger().println(e.getCause());
+            run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
             }finally {
                 //Creación de objeto de respuesta para pintar datos en pantalla
-                Resultado resultado = new Resultado();
                 resultado.setCodigo(respuesta);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
                 resultado.setApp(aplicacion);
                 resultado.setVersion(version);
-                resultado.setTicketPrueba(Objects.toString(ticketPrueba.value,""));
-                resultado.setIP_codIniciarPrueba(Objects.toString(codRetorno.value,""));
-                resultado.setIP_descIniciarPrueba(Objects.toString(descRetorno.value,""));
-                resultado.setIP_descLargaIniciarPrueba(Objects.toString(descRetornoLargo.value,""));
 
                 try {
                     //Creacion de fichero JSON
@@ -180,10 +198,10 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                     listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
                     listener.getLogger().println("Ticket de prueba: " + resultado.getTicketPrueba());
                     listener.getLogger().println("Código de retorno: " + resultado.getIP_codIniciarPrueba());
-                listener.getLogger().println("Descripción: " + resultado.getIP_descIniciarPrueba());
-                listener.getLogger().println("Descripcion larga: " + resultado.getIP_descLargaIniciarPrueba());
+                    listener.getLogger().println("Descripción: " + resultado.getIP_descIniciarPrueba());
+                    listener.getLogger().println("Descripcion larga: " + resultado.getIP_descLargaIniciarPrueba());
 
-                run.addAction(new IniciarPruebaAction(resultado));
+                    run.addAction(new IniciarPruebaAction(resultado));
 
                 }catch (RuntimeException e) {
                     listener.error(Messages.DescriptorImpl_excepciones_errorGenerarJSON());
@@ -191,7 +209,19 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                     listener.getLogger().println(e.getCause());
                     run.setResult(Result.FAILURE);
                     resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
-                    run.addAction(new IniciarPruebaAction(resultado));
+                    resultado.setHayException(true);
+                    resultado.setCodigo("-1");
+                    resultado.setMensajeException(Messages.Excepcion_mensaje());
+                    run.addAction(new FinalizarPruebaAction(resultado));
+                }catch (Exception e) {
+                    listener.error(e.getMessage());
+                    listener.getLogger().println(e.getCause());
+                    run.setResult(Result.FAILURE);
+                    resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                    resultado.setHayException(true);
+                    resultado.setCodigo("-1");
+                    resultado.setMensajeException(Messages.Excepcion_mensaje());
+                    run.addAction(new FinalizarPruebaAction(resultado));
                 }
         }
 
