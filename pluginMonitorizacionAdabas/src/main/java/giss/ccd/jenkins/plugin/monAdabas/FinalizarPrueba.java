@@ -23,7 +23,6 @@ import jakarta.xml.ws.Holder;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-//import java.net.MalformedURLException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -88,19 +87,16 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
         listener.getLogger().println("Timeout Pool: " + timeoutPooling);
         listener.getLogger().println("URL Monada: " + urlMonada);
 
-        //Parametros de retorno
-        final Holder<String> codRetornoFinalizarPrueba = new Holder<String>();
-        final Holder<String> descRetornoFinalizarPrueba = new Holder<String>();
-        final Holder<String> descRetornoLargoFinalizarPrueba = new Holder<String>();
-
-        final Holder<String> nombreFicheroResumen = new Holder<String>();
-        final Holder<String> nombreFicheroDetalle = new Holder<String>();
-        final Holder<String> codRetornoPruebaFinalizada = new Holder<String>();
-        final Holder<String> descRetornoPruebaFinalizada = new Holder<String>();
+        Resultado resultado = new Resultado();
 
         String respuesta="-1";
         run.setResult(Result.SUCCESS);
         try {
+            //Parametros de retorno
+            final Holder<String> codRetornoFinalizarPrueba = new Holder<String>();
+            final Holder<String> descRetornoFinalizarPrueba = new Holder<String>();
+            final Holder<String> descRetornoLargoFinalizarPrueba = new Holder<String>();
+
             //Llamada al servicio
             ServicioMonAdabas servicio = new ServicioMonAdabas();
             Thread t = Thread.currentThread();
@@ -118,6 +114,15 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
             if(codRetornoFinalizarPrueba.value!=null){
                 respuesta = codRetornoFinalizarPrueba.value;
+                resultado.setFP_codFinalizarPrueba(codRetornoFinalizarPrueba.value);
+            }
+
+            if(descRetornoFinalizarPrueba.value!=null){
+                resultado.setFP_descFinalizarPrueba(descRetornoFinalizarPrueba.value);
+            }
+
+            if(descRetornoLargoFinalizarPrueba.value!=null){
+                resultado.setFP_descLargaFinalizarPrueba(descRetornoLargoFinalizarPrueba.value);
             }
 
             listener.getLogger().println("Respuesta del servicio finalizarPrueba:");
@@ -128,9 +133,17 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
             //Llamada al servicio diferido de pruebaFinalizada
             if(respuesta!=null && respuesta.equals("0")) {
+
+                //Parametros de retorno
+                final Holder<String> nombreFicheroResumen = new Holder<String>();
+                final Holder<String> nombreFicheroDetalle = new Holder<String>();
+                final Holder<String> codRetornoPruebaFinalizada = new Holder<String>();
+                final Holder<String> descRetornoPruebaFinalizada = new Holder<String>();
+                final Holder<String> pendienteFinalizar = new Holder<String>();
+
                 int tiempoConsumido = 0;
                 String finalizado="-1";
-                final Holder<String> pendienteFinalizar = new Holder<String>();
+
                 while (timeoutPooling>=tiempoConsumido){
                     t.setContextClassLoader(ServicioMonAdabas.class.getClassLoader());
                     try {
@@ -145,9 +158,22 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                         t.setContextClassLoader(orig);
                     }
 
-
                     if(codRetornoPruebaFinalizada.value!=null) {
                         respuesta = codRetornoPruebaFinalizada.value;
+                        resultado.setFP_codPruebaFinalizada(codRetornoPruebaFinalizada.value);
+                    }
+
+                    if(descRetornoPruebaFinalizada.value!=null) {
+                        resultado.setFP_descPruebaFinalizada(descRetornoPruebaFinalizada.value);
+                    }
+
+                    if(nombreFicheroResumen.value!=null) {
+                        resultado.setFP_nombreFicheroResumen(nombreFicheroResumen.value+=".pdf");
+                    }
+
+                    if(nombreFicheroDetalle.value!=null) {
+                        resultado.setFP_nombreFicheroDetalle(nombreFicheroDetalle.value+=".pdf");
+
                     }
 
                     if(pendienteFinalizar.value!=null){
@@ -176,13 +202,22 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setCodigo("-1");
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
         } finally {
             if(!respuesta.equals("0")) {
                 listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
@@ -197,16 +232,9 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             }
 
             //Creación de objeto de respuesta para pintar datos en pantalla
-            Resultado resultado = new Resultado();
             resultado.setCodigo(respuesta);
             resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setTicketPrueba(ticketPrueba);
-            resultado.setFP_codFinalizarPrueba(Objects.toString(codRetornoFinalizarPrueba.value, ""));
-            resultado.setFP_descFinalizarPrueba(Objects.toString(descRetornoFinalizarPrueba.value, ""));
-            resultado.setFP_descLargaFinalizarPrueba(Objects.toString(descRetornoLargoFinalizarPrueba.value, ""));
-
-            resultado.setFP_codPruebaFinalizada(Objects.toString(codRetornoPruebaFinalizada.value, ""));
-            resultado.setFP_descPruebaFinalizada(Objects.toString(descRetornoPruebaFinalizada.value, ""));
 
             try {
                 //Descarga de informes (url base de Monada + nombre recibido)
@@ -216,19 +244,16 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 String urlFicheroResumen ="";
                 String urlFicheroDetalle ="";
 
-                if(nombreFicheroResumen.value!=null && !nombreFicheroResumen.value.isEmpty()) {
-                    nombreFicheroResumen.value+=".pdf";
-                    urlFicheroResumen = urlMonada.resolve(nombreFicheroResumen.value).toString();
+                if(resultado.getFP_nombreFicheroResumen()!=null) {
+                    urlFicheroResumen = urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString();
                     RecursosFicheros recursosFicheros = new RecursosFicheros();
-                    URL url = new URL(urlFicheroResumen);
-                    recursosFicheros.descargarFicheroURL(url, rutaBuildLocal,  nombreFicheroResumen.value);
+                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroResumen), rutaBuildLocal,  resultado.getFP_nombreFicheroResumen());
                 }
 
-                if(nombreFicheroResumen.value!=null && !nombreFicheroResumen.value.isEmpty()) {
-                    nombreFicheroDetalle.value+=".pdf";
-                    urlFicheroDetalle = urlMonada.resolve(nombreFicheroDetalle.value).toString();
+                if(resultado.getFP_nombreFicheroDetalle()!=null) {
+                    urlFicheroDetalle = urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString();
                     RecursosFicheros recursosFicheros = new RecursosFicheros();
-                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroDetalle), rutaBuildLocal,  nombreFicheroDetalle.value);
+                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroDetalle), rutaBuildLocal,  resultado.getFP_nombreFicheroDetalle());
                 }
 
                 resultado.setFP_urlFicheroResumen(urlFicheroResumen);
@@ -256,7 +281,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 UtilJSON utilJSON= new UtilJSON();
                 utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                if(codRetornoPruebaFinalizada.value!=null) {
+                if(resultado.getFP_codPruebaFinalizada()!=null) {
                     listener.getLogger().println("Respuesta del servicio pruebaFinalizada:");
                     listener.getLogger().println(" - Código de retorno: " + resultado.getFP_codPruebaFinalizada());
                     listener.getLogger().println(" - Descripción: " + resultado.getFP_descPruebaFinalizada());
@@ -273,12 +298,18 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setHayException(true);
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
                 run.addAction(new FinalizarPruebaAction(resultado));
             }catch (Exception e) {
                 listener.error(e.getMessage());
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setHayException(true);
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
                 run.addAction(new FinalizarPruebaAction(resultado));
             }
         }

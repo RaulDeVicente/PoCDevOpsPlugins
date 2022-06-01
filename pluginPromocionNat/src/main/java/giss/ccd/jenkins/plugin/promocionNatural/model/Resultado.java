@@ -8,7 +8,12 @@ public class Resultado {
     private String version = null;
     private String estadoFinal = null;
 
+    private boolean hayException = false;
+    private String mensajeException = null;
+
+
     /*Propiedades para la accion de PROMOCION NATURAL*/
+    private String DR_entornoDestino = null;
     private String DR_codReleaseDesplegada = null;
     private String DR_descReleaseDesplegada = null;
     private String DR_codDesplegarRelease = null;
@@ -51,6 +56,22 @@ public class Resultado {
 
     public void setEstadoFinal(String estadoFinal) {
         this.estadoFinal = estadoFinal;
+    }
+
+    public boolean isHayException() {
+        return hayException;
+    }
+
+    public void setHayException(boolean hayException) {
+        this.hayException = hayException;
+    }
+
+    public String getMensajeException() {
+        return mensajeException;
+    }
+
+    public void setMensajeException(String mensajeException) {
+        this.mensajeException = mensajeException;
     }
 
     public String getDR_codReleaseDesplegada() {
@@ -125,5 +146,13 @@ public class Resultado {
 
     public void setER_modulosProcesados(int ER_modulosProcesados) {
         this.ER_modulosProcesados = ER_modulosProcesados;
+    }
+
+    public String getDR_entornoDestino() {
+        return DR_entornoDestino;
+    }
+
+    public void setDR_entornoDestino(String DR_entornoDestino) {
+        this.DR_entornoDestino = DR_entornoDestino;
     }
 }

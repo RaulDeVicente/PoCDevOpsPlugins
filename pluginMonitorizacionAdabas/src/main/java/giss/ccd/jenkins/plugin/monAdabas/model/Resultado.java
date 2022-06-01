@@ -7,6 +7,8 @@ public class Resultado {
     private String app = null;
     private String version = null;
     private String estadoFinal = null;
+    private boolean hayException = false;
+    private String mensajeException = null;
 
     //Propiedades para la accion de INICIAR PRUEBA
     private String ticketPrueba = null;
@@ -18,6 +20,8 @@ public class Resultado {
     private String FP_codFinalizarPrueba = null;
     private String FP_descFinalizarPrueba = null;
     private String FP_descLargaFinalizarPrueba = null;
+    private String FP_nombreFicheroResumen = null;
+    private String FP_nombreFicheroDetalle = null;
     private String FP_urlFicheroResumen = null;
     private String FP_urlFicheroDetalle = null;
     private String FP_codPruebaFinalizada = null;
@@ -62,6 +66,22 @@ public class Resultado {
 
     public void setTicketPrueba(String ticketPrueba) {
         this.ticketPrueba = ticketPrueba;
+    }
+
+    public boolean isHayException() {
+        return hayException;
+    }
+
+    public void setHayException(boolean hayException) {
+        this.hayException = hayException;
+    }
+
+    public String getMensajeException() {
+        return mensajeException;
+    }
+
+    public void setMensajeException(String mensajeException) {
+        this.mensajeException = mensajeException;
     }
 
     public String getIP_codIniciarPrueba() {
@@ -110,6 +130,22 @@ public class Resultado {
 
     public void setFP_descLargaFinalizarPrueba(String FP_descLargaFinalizarPrueba) {
         this.FP_descLargaFinalizarPrueba = FP_descLargaFinalizarPrueba;
+    }
+
+    public String getFP_nombreFicheroResumen() {
+        return FP_nombreFicheroResumen;
+    }
+
+    public void setFP_nombreFicheroResumen(String FP_nombreFicheroResumen) {
+        this.FP_nombreFicheroResumen = FP_nombreFicheroResumen;
+    }
+
+    public String getFP_nombreFicheroDetalle() {
+        return FP_nombreFicheroDetalle;
+    }
+
+    public void setFP_nombreFicheroDetalle(String FP_nombreFicheroDetalle) {
+        this.FP_nombreFicheroDetalle = FP_nombreFicheroDetalle;
     }
 
     public String getFP_urlFicheroResumen() {

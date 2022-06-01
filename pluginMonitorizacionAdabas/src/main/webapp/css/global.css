@@ -17,3 +17,7 @@
 .marg-i-10{
     margin-left:10px
 }
+
+.error{
+    color: red;
+}

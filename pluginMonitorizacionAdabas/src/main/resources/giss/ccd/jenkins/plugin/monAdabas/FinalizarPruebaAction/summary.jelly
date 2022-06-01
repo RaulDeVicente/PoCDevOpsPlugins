@@ -6,7 +6,12 @@
         <p><div class="cuerpoA">
                 <b>Ticket de prueba</b>: ${it.resultado.ticketPrueba} <br/>
                 <b>Estado final</b>: ${it.resultado.estadoFinal} <br/>
-                <b>Código final de ejecución</b>: ${it.resultado.codigo}
+                <b>Código final de ejecución</b>: ${it.resultado.codigo} <br/>
+                <j:if test="${it.resultado.hayException}">
+                    <div class="error">
+                        <b>ERROR</b>: ${it.resultado.mensajeException} <br/>
+                    </div>
+                </j:if>
             </div>
             <div class="cuerpoB">
                 <ul>

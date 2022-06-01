@@ -1,6 +1,6 @@
 .cuerpoA{
     margin-left:15px;
-    border-left: 5px outset #a0d9f2;
+    border-left: 5px outset #2ba9e4;
     padding-left: 10px;
     padding-bottom:0px;
     margin-bottom:0px;
@@ -10,10 +10,14 @@
     padding-top:5px;
     margin-top:-10px;
     margin-left:15px;
-    border-left: 5px dashed #a0d9f2;
+    border-left: 5px dashed #2ba9e4;
     padding-left: 10px;
 }
 
 .marg-i-10{
     margin-left:10px
+}
+
+.error{
+    color: red;
 }

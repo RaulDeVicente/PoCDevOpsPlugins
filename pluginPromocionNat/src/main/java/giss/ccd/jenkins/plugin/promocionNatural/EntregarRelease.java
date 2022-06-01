@@ -8,6 +8,7 @@ import es.seg_social.ccd.promocionnatservice.Modulo;
 import es.seg_social.ccd.promocionnatservice.Modulos;
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
 import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
+import giss.ccd.jenkins.plugin.promocionNatural.util.ConversionString;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
 import giss.ccd.jenkins.plugin.util.RecursosFicheros;
 import giss.ccd.jenkins.plugin.util.UtilJSON;
@@ -33,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 
 
-import java.net.MalformedURLException;
 import java.nio.file.Paths;
 
 import java.util.HashMap;
@@ -53,7 +53,7 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
     private final String rutaFichero;
     private final String estadoRetorno;
 
-    private final static String PREFIJO_JSON= "entregarReleaseOutput_";
+    private final static String PREFIJO_JSON= "entregarReleaseOutput";
     private final static String OPERACION= "promocionNatural";
     private final static String PROCESADOS= "procesados";
 
@@ -82,16 +82,15 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
         listener.getLogger().println("Proceso: " + proceso);
         listener.getLogger().println("Fichero: " + rutaFichero);
 
+        Resultado resultado = new Resultado();
+
         RecursosFicheros utilFicheros = new RecursosFicheros();
         File ultimoFicheroModificado = utilFicheros.ultimoFicheroModificado(rutaFichero, ConfiguracionGlobal.get().getPatronFichero());
-
-        //Parametros de retorno
-        Holder<String> codRetorno = new Holder<>();
-        Holder<String> descRetorno = new Holder<>();
 
         String respuesta = "-1";
         run.setResult(Result.SUCCESS);
         int contadorModulos = 0;
+
         try {
             //Parseo del fichero de modulos
             if(ultimoFicheroModificado==null){
@@ -123,6 +122,10 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                         listLibrerias.add(libreria);
                     }
 
+                    //Parametros de retorno
+                    Holder<String> codRetorno = new Holder<>();
+                    Holder<String> descRetorno = new Holder<>();
+
                     //Llamada al servicio
                     ServicioPromocionNat servicio = new ServicioPromocionNat();
                     Thread t = Thread.currentThread();
@@ -142,6 +145,11 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
 
                     if(codRetorno.value!=null){
                         respuesta = codRetorno.value;
+                        resultado.setER_codEntregarRelease(codRetorno.value);
+                    }
+
+                    if(descRetorno.value!=null){
+                        resultado.setER_descEntregarRelease(descRetorno.value);
                     }
 
                     //En el caso de que se reciba un codigo distinto de cero, se marca la ejecucion como se ha indicado en la ejecucion
@@ -173,28 +181,34 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
             run.setResult(Result.FAILURE);
+            resultado.setHayException(true);
+            resultado.setMensajeException(Messages.Excepcion_mensaje());
+            resultado.setCodigo("-1");
         }finally {
             //Creación de objeto de respuesta para pintar datos en pantalla
-            Resultado resultado = new Resultado();
             resultado.setCodigo(respuesta);
             resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setApp(aplicacion);
             resultado.setVersion(version);
-            resultado.setER_codEntregarRelease(Objects.toString(codRetorno.value,""));
-            resultado.setER_descEntregarRelease(Objects.toString(descRetorno.value,""));
             if(ultimoFicheroModificado == null){
                 resultado.setER_fichero(Messages.DescriptorImpl_excepciones_noExisteFichero());
             }else{
                 resultado.setER_fichero(ultimoFicheroModificado.getName());
             }
-            resultado.setER_proceso(proceso);
+            resultado.setER_proceso(ConversionString.recuperarEntorno(proceso));
             resultado.setER_modulosProcesados(contadorModulos);
 
             try {
@@ -231,6 +245,9 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                 listener.getLogger().println(e.getCause());
                 run.setResult(Result.FAILURE);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
+                resultado.setHayException(true);
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                resultado.setCodigo("-1");
                 run.addAction(new EntregarReleaseAction(resultado));
             }
         }
