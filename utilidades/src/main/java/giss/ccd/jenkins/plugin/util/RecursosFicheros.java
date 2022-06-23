@@ -3,6 +3,7 @@ package giss.ccd.jenkins.plugin.util;
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ public class RecursosFicheros {
     private static final String VALOR_SAVE = "E";
     private static final String VALOR_SCRATCH = "B";
     public static final String TXT = "txt";
+    public static final int HTTP_STATUS_OK = 200;
 
     public RecursosFicheros() {
     }
@@ -116,26 +118,39 @@ public class RecursosFicheros {
      * @param urlOrigen URL origen.
      * @param rutaDestino String ruta destino.
      * @param nombreDestino String nombre destino.
+     * @return boolean con el resultado de la descarga, si es false es que no se ha descargado el fichero
      */
-    public void descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) throws IOException {
+    public boolean descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) throws IOException {
         BufferedInputStream inputStream = null;
         FileOutputStream outputStream = null;
+        boolean resultado= false;
 
         try {
-            File directorio = new File(rutaDestino);
-            if (!directorio.exists()){
-                directorio.mkdirs();
-            }
+            HttpURLConnection huc = (HttpURLConnection) urlOrigen.openConnection();
+            //Si el fichero existe en la url, se descarga
+            if(huc.getResponseCode()==HTTP_STATUS_OK){
+                File directorio = new File(rutaDestino);
+                if (!directorio.exists()){
+                    directorio.mkdirs();
+                }
 
-            inputStream = new BufferedInputStream(urlOrigen.openStream());
-            outputStream = new FileOutputStream(Paths.get(rutaDestino,nombreDestino).toString());
+                inputStream = new BufferedInputStream(urlOrigen.openStream());
+                outputStream = new FileOutputStream(Paths.get(rutaDestino,nombreDestino).toString());
 
-            byte[] data =new byte[1024];
-            int count;
-            while((count=inputStream.read(data,0,1024))!=-1){
-                outputStream.write(data,0,count);
+                byte[] data =new byte[1024];
+                int count;
+                while((count=inputStream.read(data,0,1024))!=-1){
+                    outputStream.write(data,0,count);
+                }
+                //Verificamos que el fichero se haya creado
+                File f = new File(Paths.get(rutaDestino,nombreDestino).toString());
+                if(f.exists() && !f.isDirectory()) {
+                    resultado = true;
+                }
             }
-        } catch (IOException e) {
+            return resultado;
+
+        } catch (Exception e) {
             throw e;
         }finally {
             try{

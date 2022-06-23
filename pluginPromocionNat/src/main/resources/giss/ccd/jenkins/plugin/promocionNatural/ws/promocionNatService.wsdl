@@ -149,7 +149,7 @@
   </wsdl:binding>
   <wsdl:service name="giss.ccd.natDevOps.ntdo.promocion.ws.promocionNatService">
     <wsdl:port name="giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Port" binding="tns:giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Binder">
-      <soap:address location="http://g99dnsa824-ld.portal.ss:15555/ws/giss.ccd.natDevOps.ntdo.promocion.ws:promocionNatService/giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Port"/>
+      <soap:address location="http://swdesat.portal.ss:15555/ws/giss.ccd.natDevOps.ntdo.promocion.ws:promocionNatService/giss_ccd_natDevOps_ntdo_promocion_ws_promocionNatService_Port"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

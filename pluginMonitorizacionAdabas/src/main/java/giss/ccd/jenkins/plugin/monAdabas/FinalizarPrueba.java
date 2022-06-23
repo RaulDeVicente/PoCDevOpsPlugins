@@ -1,6 +1,7 @@
 package giss.ccd.jenkins.plugin.monAdabas;
 
 
+import com.sun.xml.ws.wsdl.parser.InaccessibleWSDLException;
 import giss.ccd.jenkins.plugin.monAdabas.model.Resultado;
 import giss.ccd.jenkins.plugin.monAdabas.ws.ServicioMonAdabas;
 import giss.ccd.jenkins.plugin.util.RecursosFicheros;
@@ -23,6 +24,7 @@ import jakarta.xml.ws.Holder;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -81,6 +83,9 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
         URI urlMonada = URI.create(ConfiguracionGlobal.get().getUrlMonada());
+        EnvVars envVars=run.getEnvironment(listener);
+        String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
+
         listener.getLogger().println("Endpoint: " + endpoint);
         listener.getLogger().println("TicketPrueba: " + ticketPrueba);
         listener.getLogger().println("Intervalo Pool: " + intervaloPooling);
@@ -130,7 +135,6 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoFinalizarPrueba.value,""));
             listener.getLogger().println(" - Descripcion larga: " + Objects.toString(descRetornoLargoFinalizarPrueba.value,""));
 
-
             //Llamada al servicio diferido de pruebaFinalizada
             if(respuesta!=null && respuesta.equals("0")) {
 
@@ -143,49 +147,79 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
                 int tiempoConsumido = 0;
                 String finalizado="-1";
+                boolean resumenDescargado=false;
+                boolean detalleDescargado=false;
 
                 while (timeoutPooling>=tiempoConsumido){
-                    t.setContextClassLoader(ServicioMonAdabas.class.getClassLoader());
-                    try {
-                        servicio.inicializarServicioMonitAdabas(endpoint).pruebaFinalizada(
-                                ticketPrueba,
-                                pendienteFinalizar,
-                                nombreFicheroResumen,
-                                nombreFicheroDetalle,
-                                codRetornoPruebaFinalizada,
-                                descRetornoPruebaFinalizada);
-                    } finally {
-                        t.setContextClassLoader(orig);
+                    if(finalizado=="-1") {
+                        t.setContextClassLoader(ServicioMonAdabas.class.getClassLoader());
+                        try {
+                            servicio.inicializarServicioMonitAdabas(endpoint).pruebaFinalizada(
+                                    ticketPrueba,
+                                    pendienteFinalizar,
+                                    nombreFicheroResumen,
+                                    nombreFicheroDetalle,
+                                    codRetornoPruebaFinalizada,
+                                    descRetornoPruebaFinalizada);
+                        } finally {
+                            t.setContextClassLoader(orig);
+                        }
+
+                        if (codRetornoPruebaFinalizada.value != null) {
+                            respuesta = codRetornoPruebaFinalizada.value;
+                            resultado.setFP_codPruebaFinalizada(codRetornoPruebaFinalizada.value);
+                        }
+
+                        if (descRetornoPruebaFinalizada.value != null) {
+                            resultado.setFP_descPruebaFinalizada(descRetornoPruebaFinalizada.value);
+                        }
+
+                        if (nombreFicheroResumen.value != null) {
+                            resultado.setFP_nombreFicheroResumen(nombreFicheroResumen.value += ".pdf");
+                        }
+
+                        if (nombreFicheroDetalle.value != null) {
+                            resultado.setFP_nombreFicheroDetalle(nombreFicheroDetalle.value += ".pdf");
+
+                        }
+
+                        if (pendienteFinalizar.value != null) {
+                            finalizado = pendienteFinalizar.value;
+                        }
                     }
-
-                    if(codRetornoPruebaFinalizada.value!=null) {
-                        respuesta = codRetornoPruebaFinalizada.value;
-                        resultado.setFP_codPruebaFinalizada(codRetornoPruebaFinalizada.value);
-                    }
-
-                    if(descRetornoPruebaFinalizada.value!=null) {
-                        resultado.setFP_descPruebaFinalizada(descRetornoPruebaFinalizada.value);
-                    }
-
-                    if(nombreFicheroResumen.value!=null) {
-                        resultado.setFP_nombreFicheroResumen(nombreFicheroResumen.value+=".pdf");
-                    }
-
-                    if(nombreFicheroDetalle.value!=null) {
-                        resultado.setFP_nombreFicheroDetalle(nombreFicheroDetalle.value+=".pdf");
-
-                    }
-
-                    if(pendienteFinalizar.value!=null){
-                        finalizado = pendienteFinalizar.value;
-                    }
-
-                    //Si se produce un error en el servicio o si ya ha terminado, salimos.
-                    if(!respuesta.equals("0") || finalizado.equals("0")){
+                    //Si se produce un error en el servicio, salimos del bucle de espera.
+                    if(!respuesta.equals("0")){
                         break;
                     }
+                    //Si ya ha terminado, comenzamos a descargar los ficheros.
+                    if(finalizado.equals("0")){
 
-                    tiempoConsumido = tiempoConsumido + intervaloPooling;
+                        //Descarga de informes (url base de Monada + nombre recibido desde el servicio).
+                        if(resultado.getFP_nombreFicheroResumen()!=null && !resumenDescargado) {
+                            RecursosFicheros recursosFicheros = new RecursosFicheros();
+                            resumenDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString()),
+                                    rutaBuildLocal,
+                                    resultado.getFP_nombreFicheroResumen());
+                            if(resumenDescargado){
+                                resultado.setFP_urlFicheroResumen(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString());
+                            }
+                        }
+
+                        if(resultado.getFP_nombreFicheroDetalle()!=null && !detalleDescargado) {
+                            RecursosFicheros recursosFicheros = new RecursosFicheros();
+                            detalleDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString()),
+                                                                         rutaBuildLocal,
+                                                                         resultado.getFP_nombreFicheroDetalle());
+                            if(detalleDescargado){
+                                resultado.setFP_urlFicheroDetalle(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                            }
+                        }
+                    }
+
+                    //Si se han descargado los dos ficheros, salimos del bucle de espera.
+                    if(resumenDescargado && detalleDescargado){
+                        break;
+                    }
 
                     if (tiempoConsumido >= timeoutPooling){
                         respuesta ="-1";
@@ -194,6 +228,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                     }else {
                         listener.getLogger().println("Esperando a la finalización del análisis de las pruebas. Volviendo a llamar al servicio en " + intervaloPooling + " segundos...");
                         Thread.sleep(intervaloPooling * 1000);
+                        tiempoConsumido = tiempoConsumido + intervaloPooling;
                     }
                }
             }
@@ -201,24 +236,25 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
+        }catch (InaccessibleWSDLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_inaccesibleWSDL());
+            listener.error(e.getMessage());
+            resultado.setHayException(true);
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
-            resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
         } finally {
+
+            if(resultado.isHayException()){
+                run.setResult(Result.FAILURE);
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+            }
+
             if(!respuesta.equals("0")) {
                 listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
                 switch (estadoRetorno.toUpperCase()){
@@ -237,27 +273,6 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             resultado.setTicketPrueba(ticketPrueba);
 
             try {
-                //Descarga de informes (url base de Monada + nombre recibido)
-
-                EnvVars envVars=run.getEnvironment(listener);
-                String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
-                String urlFicheroResumen ="";
-                String urlFicheroDetalle ="";
-
-                if(resultado.getFP_nombreFicheroResumen()!=null) {
-                    urlFicheroResumen = urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString();
-                    RecursosFicheros recursosFicheros = new RecursosFicheros();
-                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroResumen), rutaBuildLocal,  resultado.getFP_nombreFicheroResumen());
-                }
-
-                if(resultado.getFP_nombreFicheroDetalle()!=null) {
-                    urlFicheroDetalle = urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString();
-                    RecursosFicheros recursosFicheros = new RecursosFicheros();
-                    recursosFicheros.descargarFicheroURL(new URL(urlFicheroDetalle), rutaBuildLocal,  resultado.getFP_nombreFicheroDetalle());
-                }
-
-                resultado.setFP_urlFicheroResumen(urlFicheroResumen);
-                resultado.setFP_urlFicheroDetalle(urlFicheroDetalle);
 
                 //Creacion de fichero JSON
                 JSONObject objPlugin = new JSONObject();
@@ -271,8 +286,8 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 objPruebaFinalizada.put("codRetorno", resultado.getFP_codPruebaFinalizada());
                 objPruebaFinalizada.put("descRetorno",resultado.getFP_descPruebaFinalizada());
 
-                objPruebaFinalizada.put("urlFicheroResumen", urlFicheroResumen);
-                objPruebaFinalizada.put("urlFicheroDetalle", urlFicheroDetalle);
+                objPruebaFinalizada.put("urlFicheroResumen", resultado.getFP_urlFicheroResumen());
+                objPruebaFinalizada.put("urlFicheroDetalle", resultado.getFP_urlFicheroDetalle());
 
                 objPlugin.put("respuesta", respuesta);
                 objPlugin.put("respuestaFinalizarPrueba",objFinalizarPrueba);
@@ -285,8 +300,8 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                     listener.getLogger().println("Respuesta del servicio pruebaFinalizada:");
                     listener.getLogger().println(" - Código de retorno: " + resultado.getFP_codPruebaFinalizada());
                     listener.getLogger().println(" - Descripción: " + resultado.getFP_descPruebaFinalizada());
-                    listener.getLogger().println(" - URL Fichero Resumen: " + urlFicheroResumen);
-                    listener.getLogger().println(" - URL Fichero Detalle: " + urlFicheroDetalle);
+                    listener.getLogger().println(" - URL Fichero Resumen: " + resultado.getFP_urlFicheroResumen());
+                    listener.getLogger().println(" - URL Fichero Detalle: " + resultado.getFP_urlFicheroDetalle());
                 }
                 listener.getLogger().println("Ficheros generados en: " + rutaBuildLocal);
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);

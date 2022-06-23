@@ -2,6 +2,7 @@ package giss.ccd.jenkins.plugin.promocionNatural;
 
 
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
+import com.sun.xml.ws.wsdl.parser.InaccessibleWSDLException;
 import es.seg_social.ccd.promocionnatservice.Elementos;
 import es.seg_social.ccd.promocionnatservice.Libreria;
 import es.seg_social.ccd.promocionnatservice.Modulo;
@@ -180,25 +181,27 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorGenerarProcesado());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
+        }catch (InaccessibleWSDLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_inaccesibleWSDL());
+            listener.error(e.getMessage());
+            resultado.setHayException(true);
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }finally {
             //Creación de objeto de respuesta para pintar datos en pantalla
+
+            if(resultado.isHayException()) {
+                run.setResult(Result.FAILURE);
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                resultado.setCodigo("-1");
+            }
+
             resultado.setCodigo(respuesta);
             resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setApp(aplicacion);

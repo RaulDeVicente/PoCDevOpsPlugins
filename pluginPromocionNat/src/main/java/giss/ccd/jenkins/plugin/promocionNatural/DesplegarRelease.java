@@ -1,6 +1,7 @@
 package giss.ccd.jenkins.plugin.promocionNatural;
 
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
+import com.sun.xml.ws.wsdl.parser.InaccessibleWSDLException;
 import giss.ccd.jenkins.plugin.promocionNatural.model.Resultado;
 import giss.ccd.jenkins.plugin.promocionNatural.util.ConversionString;
 import giss.ccd.jenkins.plugin.promocionNatural.ws.ServicioPromocionNat;
@@ -195,24 +196,25 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
+        }catch (InaccessibleWSDLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_inaccesibleWSDL());
+            listener.error(e.getMessage());
+            resultado.setHayException(true);
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }finally {
+
+            if(resultado.isHayException()){
+                run.setResult(Result.FAILURE);
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                resultado.setCodigo("-1");
+            }
 
             if(!respuesta.equals("0")) {
                 listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
