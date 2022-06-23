@@ -1,6 +1,7 @@
 package giss.ccd.jenkins.plugin.monAdabas;
 
 
+import com.sun.xml.ws.wsdl.parser.InaccessibleWSDLException;
 import es.seg_social.ccd.monadabas.service.*;
 import giss.ccd.jenkins.plugin.monAdabas.model.Resultado;
 import hudson.*;
@@ -153,6 +154,10 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
             listener.getLogger().println(e.getCause());
             resultado.setHayException(true);
         }catch (ServerSOAPFaultException e) {
+            listener.error(e.getMessage());
+            resultado.setHayException(true);
+        }catch (InaccessibleWSDLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_inaccesibleWSDL());
             listener.error(e.getMessage());
             resultado.setHayException(true);
         }catch (Exception e) {

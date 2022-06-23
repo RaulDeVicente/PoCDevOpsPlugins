@@ -2,6 +2,7 @@ package giss.ccd.jenkins.plugin.promocionNatural;
 
 
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
+import com.sun.xml.ws.wsdl.parser.InaccessibleWSDLException;
 import es.seg_social.ccd.promocionnatservice.Elementos;
 import es.seg_social.ccd.promocionnatservice.Libreria;
 import es.seg_social.ccd.promocionnatservice.Modulo;
@@ -180,6 +181,10 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorGenerarProcesado());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
+            resultado.setHayException(true);
+        }catch (InaccessibleWSDLException e) {
+            listener.error(Messages.DescriptorImpl_excepciones_inaccesibleWSDL());
+            listener.error(e.getMessage());
             resultado.setHayException(true);
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
