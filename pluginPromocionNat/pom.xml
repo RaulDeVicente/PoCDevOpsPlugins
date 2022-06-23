@@ -20,7 +20,7 @@
     </scm>
 -->
     <properties>
-        <revision>1.3.3</revision>
+        <revision>1.3.4</revision>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>2.319.3</jenkins.version>
         <java.level>8</java.level>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>giss.ccd.jenkins.plugin</groupId>
             <artifactId>utilidades</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.4</version>
         </dependency>
 
         <dependency>

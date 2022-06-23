@@ -180,25 +180,23 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorGenerarProcesado());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }finally {
             //Creación de objeto de respuesta para pintar datos en pantalla
+
+            if(resultado.isHayException()) {
+                run.setResult(Result.FAILURE);
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                resultado.setCodigo("-1");
+            }
+
             resultado.setCodigo(respuesta);
             resultado.setEstadoFinal(Objects.toString(run.getResult(),""));
             resultado.setApp(aplicacion);

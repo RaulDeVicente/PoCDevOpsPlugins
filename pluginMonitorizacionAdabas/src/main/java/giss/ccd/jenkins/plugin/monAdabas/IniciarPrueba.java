@@ -151,24 +151,23 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setCodigo("-1");
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
+
             }finally {
+
+            if(resultado.isHayException()){
+                resultado.setCodigo("-1");
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                run.setResult(Result.FAILURE);
+            }
+
                 //Creación de objeto de respuesta para pintar datos en pantalla
                 resultado.setCodigo(respuesta);
                 resultado.setEstadoFinal(Objects.toString(run.getResult(),""));

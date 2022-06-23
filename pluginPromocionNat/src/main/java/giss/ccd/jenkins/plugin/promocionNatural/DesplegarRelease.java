@@ -195,24 +195,21 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             listener.error(Messages.DescriptorImpl_excepciones_errorURLEndpoint());
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (ServerSOAPFaultException e) {
             listener.error(e.getMessage());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
-            run.setResult(Result.FAILURE);
             resultado.setHayException(true);
-            resultado.setMensajeException(Messages.Excepcion_mensaje());
-            resultado.setCodigo("-1");
         }finally {
+
+            if(resultado.isHayException()){
+                run.setResult(Result.FAILURE);
+                resultado.setMensajeException(Messages.Excepcion_mensaje());
+                resultado.setCodigo("-1");
+            }
 
             if(!respuesta.equals("0")) {
                 listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
