@@ -24,11 +24,8 @@ import jakarta.xml.ws.Holder;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Paths;
-import java.net.URI;
 import java.util.Objects;
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
 
@@ -86,11 +83,11 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
         EnvVars envVars=run.getEnvironment(listener);
         String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
-        listener.getLogger().println("Endpoint: " + endpoint);
-        listener.getLogger().println("TicketPrueba: " + ticketPrueba);
-        listener.getLogger().println("Intervalo Pool: " + intervaloPooling);
-        listener.getLogger().println("Timeout Pool: " + timeoutPooling);
-        listener.getLogger().println("URL Monada: " + urlMonada);
+        listener.getLogger().println(" - Endpoint: " + endpoint);
+        listener.getLogger().println(" - TicketPrueba: " + ticketPrueba);
+        listener.getLogger().println(" - Intervalo Pool: " + intervaloPooling);
+        listener.getLogger().println(" - Timeout Pool: " + timeoutPooling);
+        listener.getLogger().println(" - URL Monada: " + urlMonada);
 
         Resultado resultado = new Resultado();
 
@@ -103,6 +100,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             final Holder<String> descRetornoLargoFinalizarPrueba = new Holder<String>();
 
             //Llamada al servicio
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioFinalizarPrueba());
             ServicioMonAdabas servicio = new ServicioMonAdabas();
             Thread t = Thread.currentThread();
             ClassLoader orig = t.getContextClassLoader();
@@ -129,11 +127,10 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             if(descRetornoLargoFinalizarPrueba.value!=null){
                 resultado.setFP_descLargaFinalizarPrueba(descRetornoLargoFinalizarPrueba.value);
             }
-
-            listener.getLogger().println("Respuesta del servicio finalizarPrueba:");
             listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoFinalizarPrueba.value,""));
             listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoFinalizarPrueba.value,""));
             listener.getLogger().println(" - Descripcion larga: " + Objects.toString(descRetornoLargoFinalizarPrueba.value,""));
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_finFinalizarPrueba());
 
             //Llamada al servicio diferido de pruebaFinalizada
             if(respuesta!=null && respuesta.equals("0")) {
@@ -146,12 +143,13 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 final Holder<String> pendienteFinalizar = new Holder<String>();
 
                 int tiempoConsumido = 0;
-                String finalizado="-1";
+                boolean finalizado=false;
                 boolean resumenDescargado=false;
                 boolean detalleDescargado=false;
 
                 while (timeoutPooling>=tiempoConsumido){
-                    if(finalizado=="-1") {
+                    if(!finalizado) {
+                        listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioPruebaFinalizada());
                         t.setContextClassLoader(ServicioMonAdabas.class.getClassLoader());
                         try {
                             servicio.inicializarServicioMonitAdabas(endpoint).pruebaFinalizada(
@@ -183,50 +181,71 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
                         }
 
-                        if (pendienteFinalizar.value != null) {
-                            finalizado = pendienteFinalizar.value;
+                        if (pendienteFinalizar.value != null && pendienteFinalizar.value.equals("0")) {
+                            finalizado = true;
                         }
+                        String msjPendienteFinalizar;
+                        msjPendienteFinalizar= (finalizado)?" - Pendiente de finalizar: NO":" - Pendiente de finalizar: SÍ";
+
+                        listener.getLogger().println(msjPendienteFinalizar);
+                        listener.getLogger().println(" - Código de retorno: " + resultado.getFP_codPruebaFinalizada());
+                        listener.getLogger().println(" - Descripción: " + resultado.getFP_descPruebaFinalizada());
+                        listener.getLogger().println(Messages.DescriptorImpl_mensaje_finPruebaFinalizada());
                     }
                     //Si se produce un error en el servicio, salimos del bucle de espera.
                     if(!respuesta.equals("0")){
                         break;
                     }
                     //Si ya ha terminado, comenzamos a descargar los ficheros.
-                    if(finalizado.equals("0")){
-
-                        //Descarga de informes (url base de Monada + nombre recibido desde el servicio).
-                        if(resultado.getFP_nombreFicheroResumen()!=null && !resumenDescargado) {
-                            RecursosFicheros recursosFicheros = new RecursosFicheros();
-                            resumenDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString()),
-                                    rutaBuildLocal,
-                                    resultado.getFP_nombreFicheroResumen());
-                            if(resumenDescargado){
-                                resultado.setFP_urlFicheroResumen(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString());
+                    if(finalizado){
+                         listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioDescargaFichero());
+                     try {
+                            //Descarga de informes (url base de Monada + nombre recibido desde el servicio).
+                            if (resultado.getFP_nombreFicheroResumen() != null && !resumenDescargado) {
+                                RecursosFicheros recursosFicheros = new RecursosFicheros();
+                                resumenDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString()),
+                                        rutaBuildLocal,
+                                        resultado.getFP_nombreFicheroResumen());
+                                if (resumenDescargado) {
+                                    resultado.setFP_urlFicheroResumen(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString());
+                                }
                             }
-                        }
 
-                        if(resultado.getFP_nombreFicheroDetalle()!=null && !detalleDescargado) {
-                            RecursosFicheros recursosFicheros = new RecursosFicheros();
-                            detalleDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString()),
-                                                                         rutaBuildLocal,
-                                                                         resultado.getFP_nombreFicheroDetalle());
-                            if(detalleDescargado){
-                                resultado.setFP_urlFicheroDetalle(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                            if (resultado.getFP_nombreFicheroDetalle() != null && !detalleDescargado) {
+                                RecursosFicheros recursosFicheros = new RecursosFicheros();
+                                detalleDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString()),
+                                        rutaBuildLocal,
+                                        resultado.getFP_nombreFicheroDetalle());
+                                if (detalleDescargado) {
+                                    resultado.setFP_urlFicheroDetalle(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                                }
                             }
+                        }catch (SocketTimeoutException e) {
+                                listener.error(Messages.DescriptorImpl_excepciones_timeoutURL() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                                resultado.setHayException(true);
+                                tiempoConsumido = tiempoConsumido + RecursosFicheros.HTTP_TIMEOUT;
+                            }
+                        catch (Exception e){
+                            listener.error(Messages.DescriptorImpl_excepciones_errorDescarga() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                            listener.error(e.getMessage());
+                            resultado.setHayException(true);
                         }
                     }
 
                     //Si se han descargado los dos ficheros, salimos del bucle de espera.
                     if(resumenDescargado && detalleDescargado){
+                        listener.getLogger().println(" - URL Fichero Resumen: " + resultado.getFP_urlFicheroResumen());
+                        listener.getLogger().println(" - URL Fichero Detalle: " + resultado.getFP_urlFicheroDetalle());
+                        listener.getLogger().println(Messages.DescriptorImpl_mensaje_finDescargaFichero());
                         break;
                     }
 
                     if (tiempoConsumido >= timeoutPooling){
                         respuesta ="-1";
-                        descRetornoPruebaFinalizada.value = descRetornoPruebaFinalizada + ". Se ha producido un Timeout, tiempo de espera: " + timeoutPooling + " segundos.";
+                        descRetornoPruebaFinalizada.value = descRetornoPruebaFinalizada +". " + Messages.DescriptorImpl_mensaje_timeout() + " " + timeoutPooling + " segundos.";
                         break;
                     }else {
-                        listener.getLogger().println("Esperando a la finalización del análisis de las pruebas. Volviendo a llamar al servicio en " + intervaloPooling + " segundos...");
+                        listener.getLogger().println(Messages.DescriptorImpl_mensaje_reintentar() + " " + intervaloPooling + " segundos...");
                         Thread.sleep(intervaloPooling * 1000);
                         tiempoConsumido = tiempoConsumido + intervaloPooling;
                     }
@@ -247,6 +266,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
         }catch (Exception e) {
             listener.error(e.getMessage());
             listener.getLogger().println(e.getCause());
+            resultado.setHayException(true);
         } finally {
 
             if(resultado.isHayException()){
@@ -275,6 +295,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
             try {
 
                 //Creacion de fichero JSON
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioCreacionJSON());
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objFinalizarPrueba = new JSONObject();
                 JSONObject objPruebaFinalizada = new JSONObject();
@@ -296,13 +317,7 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                 UtilJSON utilJSON= new UtilJSON();
                 utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                if(resultado.getFP_codPruebaFinalizada()!=null) {
-                    listener.getLogger().println("Respuesta del servicio pruebaFinalizada:");
-                    listener.getLogger().println(" - Código de retorno: " + resultado.getFP_codPruebaFinalizada());
-                    listener.getLogger().println(" - Descripción: " + resultado.getFP_descPruebaFinalizada());
-                    listener.getLogger().println(" - URL Fichero Resumen: " + resultado.getFP_urlFicheroResumen());
-                    listener.getLogger().println(" - URL Fichero Detalle: " + resultado.getFP_urlFicheroDetalle());
-                }
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_finCreacionJSON());
                 listener.getLogger().println("Ficheros generados en: " + rutaBuildLocal);
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
 

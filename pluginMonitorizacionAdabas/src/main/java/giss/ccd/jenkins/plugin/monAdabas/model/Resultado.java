@@ -22,8 +22,8 @@ public class Resultado {
     private String FP_descLargaFinalizarPrueba = null;
     private String FP_nombreFicheroResumen = null;
     private String FP_nombreFicheroDetalle = null;
-    private String FP_urlFicheroResumen = null;
-    private String FP_urlFicheroDetalle = null;
+    private String FP_urlFicheroResumen = "";
+    private String FP_urlFicheroDetalle = "";
     private String FP_codPruebaFinalizada = null;
     private String FP_descPruebaFinalizada = null;
 

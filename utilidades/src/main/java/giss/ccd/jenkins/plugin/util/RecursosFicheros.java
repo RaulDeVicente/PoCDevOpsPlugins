@@ -4,6 +4,7 @@ import giss.ccd.jenkins.plugin.model.ModuloOrigen;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -21,6 +22,7 @@ public class RecursosFicheros {
     private static final String VALOR_SCRATCH = "B";
     public static final String TXT = "txt";
     public static final int HTTP_STATUS_OK = 200;
+    public static final int HTTP_TIMEOUT = 15;
 
     public RecursosFicheros() {
     }
@@ -127,6 +129,8 @@ public class RecursosFicheros {
 
         try {
             HttpURLConnection huc = (HttpURLConnection) urlOrigen.openConnection();
+            huc.setConnectTimeout(HTTP_TIMEOUT*1000);
+            huc.setReadTimeout(HTTP_TIMEOUT*1000);
             //Si el fichero existe en la url, se descarga
             if(huc.getResponseCode()==HTTP_STATUS_OK){
                 File directorio = new File(rutaDestino);
