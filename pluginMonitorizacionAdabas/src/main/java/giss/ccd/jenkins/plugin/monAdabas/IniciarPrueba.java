@@ -63,10 +63,10 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
 
-        listener.getLogger().println("Endpoint: " + endpoint);
-        listener.getLogger().println("Aplicación: " + aplicacion);
-        listener.getLogger().println("Versión: " + version);
-        listener.getLogger().println("Acción al no recibir ticket: " + estadoPruebas);
+        listener.getLogger().println(" - Endpoint: " + endpoint);
+        listener.getLogger().println(" - Aplicación: " + aplicacion);
+        listener.getLogger().println(" - Versión: " + version);
+        listener.getLogger().println(" - Acción al no recibir ticket: " + estadoPruebas);
 
         Resultado resultado = new Resultado();
 
@@ -99,6 +99,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
             final Holder<String> descRetornoLargo = new Holder<>();
 
             //Llamada al servicio
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioIniciarPrueba());
             ServicioMonAdabas servicio = new ServicioMonAdabas();
             Thread t = Thread.currentThread();
             ClassLoader orig = t.getContextClassLoader();
@@ -132,6 +133,13 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
             if(ticketPrueba.value!=null){
                 resultado.setTicketPrueba(ticketPrueba.value);
             }
+
+            listener.getLogger().println(" - Ticket de prueba: " + resultado.getTicketPrueba());
+            listener.getLogger().println(" - Código de retorno: " + resultado.getIP_codIniciarPrueba());
+            listener.getLogger().println(" - Descripción: " + resultado.getIP_descIniciarPrueba());
+            listener.getLogger().println(" - Descripcion larga: " + resultado.getIP_descLargaIniciarPrueba());
+
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_finIniciarPrueba());
 
             //En el caso de que no se reciba ticket, se marca la ejecucion como se ha indicado en la ejecucion
            if(ticketPrueba.value==null || ticketPrueba.value.isEmpty()) {
@@ -181,6 +189,7 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
 
                 try {
                     //Creacion de fichero JSON
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioCreacionJSON());
                     JSONObject objPlugin = new JSONObject();
                     JSONObject objServicio = new JSONObject();
 
@@ -198,12 +207,10 @@ public class IniciarPrueba extends Builder implements SimpleBuildStep {
                     UtilJSON utilJSON= new UtilJSON();
                     utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-                    listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(rutaBuildLocal).toString());
+                    listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(rutaBuildLocal).toString());
+
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_finCreacionJSON());
                     listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
-                    listener.getLogger().println("Ticket de prueba: " + resultado.getTicketPrueba());
-                    listener.getLogger().println("Código de retorno: " + resultado.getIP_codIniciarPrueba());
-                    listener.getLogger().println("Descripción: " + resultado.getIP_descIniciarPrueba());
-                    listener.getLogger().println("Descripcion larga: " + resultado.getIP_descLargaIniciarPrueba());
 
                     run.addAction(new IniciarPruebaAction(resultado));
 

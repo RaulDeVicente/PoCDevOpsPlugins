@@ -77,11 +77,11 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
 
-        listener.getLogger().println("Endpoint: " + endpoint);
-        listener.getLogger().println("Aplicación: " + aplicacion);
-        listener.getLogger().println("Versión: " + version);
-        listener.getLogger().println("Proceso: " + proceso);
-        listener.getLogger().println("Fichero: " + rutaFichero);
+        listener.getLogger().println(" - Endpoint: " + endpoint);
+        listener.getLogger().println(" - Aplicación: " + aplicacion);
+        listener.getLogger().println(" - Versión: " + version);
+        listener.getLogger().println(" - Proceso: " + proceso);
+        listener.getLogger().println(" - Fichero: " + rutaFichero);
 
         Resultado resultado = new Resultado();
 
@@ -106,6 +106,8 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                     listener.getLogger().println(Messages.DescriptorImpl_excepciones_noExisteLibrerias());
                     respuesta="0";
                 } else {
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioProcesoFichero());
+
                     Elementos elementos = new Elementos();
                     List<Libreria> listLibrerias = elementos.getLibreria();
                     for (Map.Entry<String, List<ModuloOrigen>> libreriaModulos : mapLibreriaModulos.entrySet()) {
@@ -122,12 +124,15 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                         libreria.setModulos(modulo);
                         listLibrerias.add(libreria);
                     }
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_finProcesoFichero() + " " + contadorModulos + " módulos");
+
 
                     //Parametros de retorno
                     Holder<String> codRetorno = new Holder<>();
                     Holder<String> descRetorno = new Holder<>();
 
                     //Llamada al servicio
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioEntregarRelease());
                     ServicioPromocionNat servicio = new ServicioPromocionNat();
                     Thread t = Thread.currentThread();
                     ClassLoader orig = t.getContextClassLoader();
@@ -153,6 +158,10 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                         resultado.setER_descEntregarRelease(descRetorno.value);
                     }
 
+                    listener.getLogger().println(" - Código de retorno: " + resultado.getER_codEntregarRelease());
+                    listener.getLogger().println(" - Descripción: " + resultado.getER_descEntregarRelease());
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_finEntregarRelease());
+
                     //En el caso de que se reciba un codigo distinto de cero, se marca la ejecucion como se ha indicado en la ejecucion
                     if(codRetorno.value==null || !codRetorno.value.equals("0")) {
                         listener.error(Messages.DescriptorImpl_excepciones_retornoDistintoCero());
@@ -167,6 +176,8 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                     }
 
                 }
+
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_moverFicheroProcesado());
 
                 String carpetaProcesado = ConfiguracionGlobal.get().getCarpetaProcesado();
                 if(carpetaProcesado==null || carpetaProcesado.trim().isEmpty()){
@@ -217,6 +228,7 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
             try {
 
                 //Creacion de fichero JSON
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioCreacionJSON());
 
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objServicio = new JSONObject();
@@ -235,10 +247,9 @@ public class EntregarRelease extends Builder implements SimpleBuildStep {
                 utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
                 listener.getLogger().println("Creación de fichero JSON de respuesta en : " + Paths.get(rutaBuildLocal).toString());
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_finCreacionJSON());
 
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
-                listener.getLogger().println("Código de retorno: " + resultado.getER_codEntregarRelease());
-                listener.getLogger().println("Descripción: " + resultado.getER_descEntregarRelease());
 
                 run.addAction(new EntregarReleaseAction(resultado));
 

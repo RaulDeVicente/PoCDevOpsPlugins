@@ -94,12 +94,12 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
 
-        listener.getLogger().println("Endpoint: " + endpoint);
-        listener.getLogger().println("Aplicación: " + aplicacion);
-        listener.getLogger().println("Versión: " + version);
-        listener.getLogger().println("Entorno destino: " + entornoDestino);
-        listener.getLogger().println("Intervalo Pool: " + intervaloPooling);
-        listener.getLogger().println("Timeout Pool: " + timeoutPooling);
+        listener.getLogger().println(" - Endpoint: " + endpoint);
+        listener.getLogger().println(" - Aplicación: " + aplicacion);
+        listener.getLogger().println(" - Versión: " + version);
+        listener.getLogger().println(" - Entorno destino: " + entornoDestino);
+        listener.getLogger().println(" - Intervalo Pool: " + intervaloPooling);
+        listener.getLogger().println(" - Timeout Pool: " + timeoutPooling);
 
         Resultado resultado = new Resultado();
 
@@ -112,6 +112,7 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             final Holder<String> descRetornoDesplegarRelease = new Holder<>();
 
             //Llamada al servicio
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioDesplegarRelease());
             ServicioPromocionNat servicio = new ServicioPromocionNat();
             Thread t = Thread.currentThread();
             ClassLoader orig = t.getContextClassLoader();
@@ -136,9 +137,9 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 resultado.setDR_descDesplegarRelease(descRetornoDesplegarRelease.value);
             }
 
-            listener.getLogger().println("Respuesta del servicio desplegarRelease:");
             listener.getLogger().println(" - Código de retorno: " + Objects.toString(codRetornoDesplegarRelease.value,""));
             listener.getLogger().println(" - Descripción: " + Objects.toString(descRetornoDesplegarRelease.value,""));
+            listener.getLogger().println(Messages.DescriptorImpl_mensaje_finDesplegarRelease());
 
             if(respuesta!=null && respuesta.equals("0")) {
                 //Parametros de retorno
@@ -146,9 +147,10 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 final Holder<String> descRetornoReleaseDesplegada = new Holder<>();
 
                 int tiempoConsumido = 0;
-                String finalizado = "-1";
+                boolean finalizado = false;
                 final Holder<String> pendienteFinalizar = new Holder<>();
                 while (timeoutPooling >= tiempoConsumido) {
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioReleaseDesplegada());
                     t.setContextClassLoader(ServicioPromocionNat.class.getClassLoader());
                     try {
                         servicio.inicializarServicioPromocionNat(endpoint).releaseDesplegada(
@@ -171,12 +173,19 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                         resultado.setDR_descReleaseDesplegada(descRetornoReleaseDesplegada.value);
                     }
 
-                    if (pendienteFinalizar.value != null) {
-                        finalizado = pendienteFinalizar.value;
+                    if (pendienteFinalizar.value != null && pendienteFinalizar.value.equals("0")) {
+                        finalizado = true;
                     }
+                    String msjPendienteFinalizar;
+                    msjPendienteFinalizar= (finalizado)?" - Pendiente de finalizar: NO":" - Pendiente de finalizar: SÍ";
+
+                    listener.getLogger().println(msjPendienteFinalizar);
+                    listener.getLogger().println(" - Código de retorno: " + codRetornoReleaseDesplegada.value);
+                    listener.getLogger().println(" - Descripción: " + descRetornoReleaseDesplegada.value);
+                    listener.getLogger().println(Messages.DescriptorImpl_mensaje_finReleaseDesplegada());
 
                     //Si se produce un error en el servicio o si ya ha terminado, salimos.
-                    if (!respuesta.equals("0") || finalizado.equals("0")) {
+                    if (!respuesta.equals("0") || finalizado) {
                         break;
                     }
 
@@ -236,8 +245,8 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
             resultado.setDR_entornoDestino(ConversionString.recuperarEntorno(entornoDestino));
             try {
 
-
                 //Creacion de fichero JSON
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioCreacionJSON());
                 JSONObject objPlugin = new JSONObject();
                 JSONObject objDesplegarRelease = new JSONObject();
                 JSONObject objReleaseDesplegada = new JSONObject();
@@ -258,13 +267,8 @@ public class DesplegarRelease extends Builder implements SimpleBuildStep {
                 UtilJSON utilJSON= new UtilJSON();
                 utilJSON.guardarJSON(objPlugin, rutaBuildLocal, PREFIJO_JSON);
 
-
-                if(resultado.getDR_codReleaseDesplegada()!=null) {
-                    listener.getLogger().println("Respuesta del servicio releaseDesplegada:");
-                    listener.getLogger().println(" - Código de retorno: " + resultado.getDR_codReleaseDesplegada());
-                    listener.getLogger().println(" - Descripción: " + resultado.getDR_descReleaseDesplegada());
-                }
                 listener.getLogger().println("Creación de fichero JSON de respuesta en: " + Paths.get(rutaBuildLocal));
+                listener.getLogger().println(Messages.DescriptorImpl_mensaje_finCreacionJSON());
                 listener.getLogger().println("El plugin se ha ejecutado con código: " + respuesta);
 
                 run.addAction(new DesplegarReleaseAction(resultado));
