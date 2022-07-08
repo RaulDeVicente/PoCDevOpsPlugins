@@ -23,6 +23,7 @@ public class ConfiguracionGlobal extends GlobalConfiguration {
     private String servidor;
     private String puerto;
     private String urlMonada;
+    private String timeoutPDF;
 
     public ConfiguracionGlobal() {
         // When Jenkins is restarted, load any saved configuration from disk.
@@ -33,6 +34,7 @@ public class ConfiguracionGlobal extends GlobalConfiguration {
     public String getServidor() {return servidor;}
     public String getPuerto() {return puerto;}
     public String getUrlMonada() {return urlMonada;}
+    public String getTimeoutPDF() {return timeoutPDF;}
 
     @DataBoundSetter
     public void setProtocolo(String protocolo) {
@@ -55,6 +57,12 @@ public class ConfiguracionGlobal extends GlobalConfiguration {
     @DataBoundSetter
     public void setUrlMonada(String urlMonada) {
         this.urlMonada = urlMonada;
+        save();
+    }
+
+    @DataBoundSetter
+    public void setTimeoutPDF(String timeoutPDF) {
+        this.timeoutPDF = timeoutPDF;
         save();
     }
 

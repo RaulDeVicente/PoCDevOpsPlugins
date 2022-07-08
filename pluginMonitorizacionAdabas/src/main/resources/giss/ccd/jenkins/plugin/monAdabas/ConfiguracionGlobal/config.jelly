@@ -17,5 +17,8 @@
         <f:entry title="${%UrlMonada}" field="urlMonada">
             <f:textbox />
         </f:entry>
+        <f:entry title="${%TimeoutPDF}" field="timeoutPDF">
+            <f:number default="90"/>
+        </f:entry>
     </f:section>
 </j:jelly>
