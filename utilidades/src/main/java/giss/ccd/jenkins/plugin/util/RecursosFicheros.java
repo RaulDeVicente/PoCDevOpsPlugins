@@ -1,6 +1,7 @@
 package giss.ccd.jenkins.plugin.util;
 
 import giss.ccd.jenkins.plugin.model.ModuloOrigen;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -22,7 +23,6 @@ public class RecursosFicheros {
     private static final String VALOR_SCRATCH = "B";
     public static final String TXT = "txt";
     public static final int HTTP_STATUS_OK = 200;
-    public static final int HTTP_TIMEOUT = 15;
 
     public RecursosFicheros() {
     }
@@ -122,15 +122,15 @@ public class RecursosFicheros {
      * @param nombreDestino String nombre destino.
      * @return boolean con el resultado de la descarga, si es false es que no se ha descargado el fichero
      */
-    public boolean descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino) throws IOException {
+    public boolean descargarFicheroURL(URL urlOrigen, String rutaDestino, String nombreDestino, int timeoutFichero) throws IOException {
         BufferedInputStream inputStream = null;
         FileOutputStream outputStream = null;
         boolean resultado= false;
 
         try {
             HttpURLConnection huc = (HttpURLConnection) urlOrigen.openConnection();
-            huc.setConnectTimeout(HTTP_TIMEOUT*1000);
-            huc.setReadTimeout(HTTP_TIMEOUT*1000);
+            huc.setConnectTimeout(timeoutFichero*1000);
+            huc.setReadTimeout(timeoutFichero*1000);
             //Si el fichero existe en la url, se descarga
             if(huc.getResponseCode()==HTTP_STATUS_OK){
                 File directorio = new File(rutaDestino);
@@ -168,13 +168,28 @@ public class RecursosFicheros {
                 throw e;
             }
         }
-
-
-
-
-
     }
 
+    /**
+     * Descargar un fichero desde una url.
+     *
+     * @param urlOrigen URL origen.
+     * @param rutaDestino String ruta destino.
+     * @param nombreDestino String nombre destino.
+     * @return boolean con el resultado de la descarga, si es false es que no se ha descargado el fichero
+     */
+    public boolean descargarFicheroURL2(URL urlOrigen, String rutaDestino, String nombreDestino, int timeoutFichero) throws IOException {
 
+        boolean resultado = false;
+
+        try {
+            FileUtils.copyURLToFile(urlOrigen, new File(Paths.get(rutaDestino,nombreDestino).toString()),timeoutFichero,timeoutFichero);
+
+            return true;
+
+        } catch (Exception e) {
+            throw e;
+        }
+    }
 }
 

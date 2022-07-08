@@ -36,8 +36,9 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
     private final String ticketPrueba;
     private String estadoRetorno;
-    private int intervaloPooling = 60;
+    private int intervaloPooling = 90;
     private int timeoutPooling = 600;
+    private int timeoutFichero = 90;
     private final static String PREFIJO_JSON= "finalizarPruebaOutput";
     private final static String OPERACION= "monitorizacionAdabas";
 
@@ -80,6 +81,13 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
 
         String endpoint = ConfiguracionGlobal.get().getEndpoint();
         URI urlMonada = URI.create(ConfiguracionGlobal.get().getUrlMonada());
+
+        try {
+            timeoutFichero = Integer.parseInt(ConfiguracionGlobal.get().getTimeoutPDF());
+        }catch (NumberFormatException e){
+            timeoutFichero = 90;
+        }
+        run.getRootDir();
         EnvVars envVars=run.getEnvironment(listener);
         String rutaBuildLocal = Paths.get(String.valueOf(workspace), OPERACION, envVars.get("BUILD_ID")).toString();
 
@@ -199,32 +207,38 @@ public class FinalizarPrueba extends Builder implements SimpleBuildStep {
                     //Si ya ha terminado, comenzamos a descargar los ficheros.
                     if(finalizado){
                          listener.getLogger().println(Messages.DescriptorImpl_mensaje_inicioDescargaFichero());
-                     try {
+                         listener.getLogger().println(" - Timeout limitado a " + timeoutFichero + " segundos.");
+                         try {
                             //Descarga de informes (url base de Monada + nombre recibido desde el servicio).
                             if (resultado.getFP_nombreFicheroResumen() != null && !resumenDescargado) {
                                 RecursosFicheros recursosFicheros = new RecursosFicheros();
-                                resumenDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString()),
+                                resumenDescargado = recursosFicheros.descargarFicheroURL2(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString()),
                                         rutaBuildLocal,
-                                        resultado.getFP_nombreFicheroResumen());
+                                        resultado.getFP_nombreFicheroResumen(), timeoutFichero);
                                 if (resumenDescargado) {
                                     resultado.setFP_urlFicheroResumen(urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString());
                                 }
                             }
-
+                     }catch (SocketTimeoutException e) {
+                         listener.error(Messages.DescriptorImpl_excepciones_timeoutURL() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroResumen()).toString());
+                         resultado.setHayException(true);
+                         tiempoConsumido = tiempoConsumido + timeoutFichero;
+                     }
+                     try{
                             if (resultado.getFP_nombreFicheroDetalle() != null && !detalleDescargado) {
                                 RecursosFicheros recursosFicheros = new RecursosFicheros();
-                                detalleDescargado = recursosFicheros.descargarFicheroURL(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString()),
+                                detalleDescargado = recursosFicheros.descargarFicheroURL2(new URL(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString()),
                                         rutaBuildLocal,
-                                        resultado.getFP_nombreFicheroDetalle());
+                                        resultado.getFP_nombreFicheroDetalle(), timeoutFichero);
                                 if (detalleDescargado) {
                                     resultado.setFP_urlFicheroDetalle(urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
                                 }
                             }
-                        }catch (SocketTimeoutException e) {
-                                listener.error(Messages.DescriptorImpl_excepciones_timeoutURL() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
-                                resultado.setHayException(true);
-                                tiempoConsumido = tiempoConsumido + RecursosFicheros.HTTP_TIMEOUT;
-                            }
+                    }catch (SocketTimeoutException e) {
+                        listener.error(Messages.DescriptorImpl_excepciones_timeoutURL() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
+                        resultado.setHayException(true);
+                        tiempoConsumido = tiempoConsumido + timeoutFichero;
+                    }
                         catch (Exception e){
                             listener.error(Messages.DescriptorImpl_excepciones_errorDescarga() + " " + urlMonada.resolve(resultado.getFP_nombreFicheroDetalle()).toString());
                             listener.error(e.getMessage());
