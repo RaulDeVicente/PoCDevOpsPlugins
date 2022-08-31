@@ -18,7 +18,7 @@
             <f:textbox />
         </f:entry>
         <f:entry title="${%CarpetaProcesado}" field="carpetaProcesado">
-            <f:textbox />
+            <f:textbox default="procesados"/>
         </f:entry>
     </f:section>
 </j:jelly>
